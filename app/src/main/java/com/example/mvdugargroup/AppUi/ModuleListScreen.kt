@@ -1,6 +1,9 @@
 package com.example.mvdugargroup.AppUi
 
+import android.widget.Toast
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +14,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,6 +30,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
@@ -42,6 +51,21 @@ fun ModuleListScreen(
     val moduleList = listOf("MATERIAL", "CONSTRUCTION", "PAYROLL", "FINANCIALS", "SETUP")
     var expanded by remember { mutableStateOf(false) }
     var selectedText by remember { mutableStateOf("SELECT MODULE") }
+    var selectedModule by remember { mutableStateOf<String?>(null) }
+
+    val textMeasurer = rememberTextMeasurer()
+    val longestWidth = remember {
+        moduleList.maxOf {
+            textMeasurer.measure(
+                text = AnnotatedString(it),
+                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal)
+            ).size.width
+        }
+    }
+
+    val buttonWidth = with(LocalDensity.current) {
+        (longestWidth + 100).toDp()
+    }
 
     Box(
         modifier = Modifier
@@ -100,88 +124,41 @@ fun ModuleListScreen(
                     color = Color.DarkGray
                 )
             }
-
-
             Spacer(modifier = Modifier.height(24.dp))
-            ModuleDropdown(
-                navController = navController,
-                moduleList = moduleList,
-                selectedText = selectedText,
-                onModuleSelected = { selectedText = it }
-            )
-            /*// Dropdown-style module selector
-            val scrollState = rememberScrollState()
-            Box(
-                modifier = Modifier
-                    .width(280.dp)
-                    .height(40.dp)
-                    .background(Color(0xFFB0B0B0))
-                    .clickable { expanded = !expanded },
-                contentAlignment = Alignment.CenterStart
+            Column(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = selectedText,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                        color = Color.White // Pinkish-red
-                    )
-                    Icon(
-                        imageVector = if (expanded)
-                            Icons.Default.KeyboardArrowUp
-                        else
-                            Icons.Default.KeyboardArrowDown,
-                        contentDescription = "Toggle Dropdown",
-                        tint = Color.Black
-                    )
+                moduleList.forEach { module ->
+                    Box(
+                        modifier = Modifier
+                            .width(240.dp)
+                            .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
+                            .background(
+                                if (selectedModule == module) Color.LightGray else Color.White,
+                                shape = RoundedCornerShape(6.dp)
+                            )
+                            .clickable {
+                                selectedModule = module
+                                if (module == "MATERIAL") {
+                                    navController.navigate(Route.FUEL_ISSUE)
+                                } else {
+                                   // Toast.makeText(LocalContext.current, "No access permission.", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                            .padding(vertical = 12.dp, horizontal = 24.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Text(
+                            text = module,
+                            fontWeight = if (selectedModule == module) FontWeight.Bold else FontWeight.Normal,
+                            fontSize = 16.sp,
+                            color = Color.Black
+                        )
+                    }
                 }
             }
 
-            if (expanded) {
-                Spacer(modifier = Modifier.height(8.dp))
-                Box(
-                    modifier = Modifier
-                        .heightIn(max = 200.dp) // Set a max height to prevent upward shift
-                        .width(280.dp)
-                        .border(1.dp, Color.Gray)
-                        .verticalScroll(scrollState)
-                        .background(Color.White)
-                ){
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        moduleList.forEach { module ->
-                            HorizontalDivider(
-                                modifier = Modifier.width(200.dp),
-                                thickness = 1.dp,
-                                color = Color.LightGray
-                            )
-                            Text(
-                                text = module,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clickable {
-                                        selectedText = module
-                                        expanded = false
-                                        if (module == "MATERIAL") {
-                                            navController.navigate("fuelIssue")
-                                        }
-                                    }
-                                    .padding(vertical = 12.dp, horizontal = 24.dp),
-                                fontWeight = FontWeight.Medium,
-                                fontSize = 16.sp,
-                                color = Color.Black,
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                }
-
-            }*/
         }
     }
 }

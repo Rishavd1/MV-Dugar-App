@@ -37,9 +37,12 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.R
+import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 
 @Composable
 fun LoginScreen(navController: NavController) {
@@ -130,7 +133,7 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp)
             ) {
                 Text("LOGIN", style = MaterialTheme.typography.labelLarge)
             }
@@ -146,10 +149,17 @@ fun LoginScreen(navController: NavController) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp)
             ) {
                 Text("RESET", style = MaterialTheme.typography.labelLarge)
             }
         }
+    }
+}@Preview(showBackground = true)
+@Composable
+fun LoginScreenPreview() {
+    val dummyNavController = rememberNavController()
+    MVDugarGroupTheme {
+        LoginScreen(navController = dummyNavController)
     }
 }

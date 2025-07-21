@@ -27,9 +27,9 @@ import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 fun VehicleAllocationScreen(navController: NavController? = null) {
     val scrollState = rememberScrollState()
     val vehicleList = listOf(
-        "LMVMBC001 - BOLERO CAMPER BSI - BA 18 CHA 5928",
-        "LMVMBC002 - BOLERO CAMPER BSI - BA 18 CHA 5929",
-        "LMVMBC003 - BOLERO CAMPER BSI - BA 20 CHA 9672"
+        "LMVMBC001 - BOLERO CAMPER BSIII - BA 18 CHA 5928",
+        "LMVMBC002 - BOLERO CAMPER BSIV - BA 18 CHA 5929",
+        "LMVMBC003 - BOLERO CAMPER BSV - BA 20 CHA 9672"
     )
 
     var selectedVehicle by remember { mutableStateOf("") }
@@ -84,7 +84,56 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         )*/
 
 
-        ExposedDropdownMenuBox(
+        Text(
+            text = "Select Vehicle",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
+
+        var vehicleExpanded by remember { mutableStateOf(false) }
+
+        Box(modifier = Modifier.fillMaxWidth()) {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = {
+                    searchText = it
+                    vehicleExpanded = true
+                },
+                modifier = Modifier
+                    .fillMaxWidth(),
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.ArrowDropDown,
+                        contentDescription = null,
+                        modifier = Modifier.clickable { vehicleExpanded = true }
+                    )
+                },
+                placeholder = { Text("Select Vehicle") },
+                singleLine = true
+            )
+
+            DropdownMenu(
+                expanded = vehicleExpanded,
+                onDismissRequest = { vehicleExpanded = false },
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                vehicleList
+                    .filter { it.contains(searchText, ignoreCase = true) }
+                    .forEach { item ->
+                        DropdownMenuItem(
+                            text = { Text(item) },
+                            onClick = {
+                                selectedVehicle = item
+                                searchText = item
+                                vehicleExpanded = false
+                            }
+                        )
+                    }
+            }
+        }
+
+        /*ExposedDropdownMenuBox(
             expanded = expanded,
             onExpandedChange = { expanded = !expanded },
             modifier = Modifier
@@ -123,7 +172,7 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
                     )
                 }
             }
-        }
+        }*/
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -212,7 +261,8 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
             label = { Text("Standard Quantity") },
             isError = false,
             enabled = true,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         if (standardQty.isBlank()) {
             Text(
@@ -230,7 +280,8 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
             onValueChange = { issueQty = it },
             label = { Text("Issue Quantity") },
             isError = false,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         if (issueQty.isBlank()) {
             Text(
@@ -270,7 +321,8 @@ fun LabelledField(label: String, value: String, onValueChange: (String) -> Unit)
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
         )
         Spacer(modifier = Modifier.height(8.dp))
     }

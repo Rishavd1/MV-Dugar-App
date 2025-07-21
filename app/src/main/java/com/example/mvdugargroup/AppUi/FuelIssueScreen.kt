@@ -55,7 +55,6 @@ fun FuelIssueScreen(navController: NavController? = null) {
     val issueDate = "06-Jul-2025"
 
 
-
         Column(
             modifier = Modifier
                 .padding(24.dp)
@@ -74,7 +73,7 @@ fun FuelIssueScreen(navController: NavController? = null) {
                 onValueChange = { issueNo = it },
                 label = { Text("Issue No") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(6.dp),
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
@@ -91,7 +90,7 @@ fun FuelIssueScreen(navController: NavController? = null) {
                 label = { Text("Issue Date") },
                 readOnly = true,
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp),
+                shape = RoundedCornerShape(6.dp),
                 trailingIcon = {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
@@ -116,7 +115,7 @@ fun FuelIssueScreen(navController: NavController? = null) {
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(6.dp)
                 )
                 ExposedDropdownMenu(
                     expanded = fuelTypeExpanded,
@@ -148,7 +147,7 @@ fun FuelIssueScreen(navController: NavController? = null) {
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(6.dp)
                 )
                 ExposedDropdownMenu(
                     expanded = businessUnitExpanded,
@@ -180,7 +179,7 @@ fun FuelIssueScreen(navController: NavController? = null) {
                     modifier = Modifier
                         .menuAnchor()
                         .fillMaxWidth(),
-                    shape = RoundedCornerShape(12.dp)
+                    shape = RoundedCornerShape(6.dp)
                 )
                 ExposedDropdownMenu(
                     expanded = warehouseExpanded,
@@ -203,24 +202,25 @@ fun FuelIssueScreen(navController: NavController? = null) {
                 onValueChange = { stock = it },
                 label = { Text("Stock") },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp),
+                singleLine = true
             )
-
+//      Submit
             Button(
                 onClick = {
                     navController?.navigate(Route.VEHICLE_ALLOCATION)
                     },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp)
             ) {
-                Text("Submit")
+                Text("Next")
             }
-
+//      Last 10 Entries
             OutlinedButton(
                 onClick = {
                      },
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
+                shape = RoundedCornerShape(6.dp)
             ) {
                 Text("Last 10 Entries")
             }

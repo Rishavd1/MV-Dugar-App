@@ -4,6 +4,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDropDown
@@ -20,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -182,7 +184,11 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         LabelledField(label = "Prev Issue Date", value = prevIssueDate) { prevIssueDate = it }
 
 
-        Text("Meter Status", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(
+            "Meter Status",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
         var statusExpanded by remember { mutableStateOf(false) }
 
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -260,7 +266,7 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
             onValueChange = {},
             label = { Text("Standard Quantity") },
             isError = false,
-            enabled = true,
+            enabled = false,
             modifier = Modifier.fillMaxWidth(),
             singleLine = true
         )
@@ -305,11 +311,14 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         )
 
         Spacer(modifier = Modifier.height(8.dp))
-
-        Button(onClick = {
-
-        }) {
-            Text("Submit")
+        Button(
+            onClick = {
+                navController?.navigate(Route.VEHICLE_IMAGE_CAPTURE)
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(6.dp)
+        ) {
+            Text("Next")
         }
     }
 }

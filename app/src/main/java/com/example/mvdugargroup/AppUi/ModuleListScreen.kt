@@ -40,6 +40,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.Settings
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,178 +59,112 @@ fun ModuleListScreen(
     userName: String = "Somnath Das",
     userId: String = "somnathd"
 ) {
-    val moduleList = listOf("MATERIAL", "CONSTRUCTION", "PAYROLL", "FINANCIALS", "SETUP")
-    var expanded by remember { mutableStateOf(false) }
-    var selectedText by remember { mutableStateOf("SELECT MODULE") }
+    val moduleList = listOf(
+        "MATERIAL" to Icons.Default.Inventory,       // Represents materials/items
+        "CONSTRUCTION" to Icons.Default.Engineering, // Represents construction/technical work
+        "PAYROLL" to Icons.Default.AttachMoney,      // Represents salary/money
+        "FINANCIALS" to Icons.Default.AccountBalance, // Represents banking/finance
+        "SETUP" to Icons.Default.Settings            // Represents configuration/setup
+    )
+
     var selectedModule by remember { mutableStateOf<String?>(null) }
-
-    val textMeasurer = rememberTextMeasurer()
-    val longestWidth = remember {
-        moduleList.maxOf {
-            textMeasurer.measure(
-                text = AnnotatedString(it),
-                style = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal)
-            ).size.width
-        }
-    }
-
-    val buttonWidth = with(LocalDensity.current) {
-        (longestWidth + 100).toDp()
-    }
 
     Box(
         modifier = Modifier
             .fillMaxSize()
             .background(Color.White),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.TopCenter
     ) {
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.fillMaxSize()
         ) {
-
+            // User name at the top, centered
+            Spacer(modifier = Modifier.height(32.dp))
+            Text(
+                text = userName,
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                color = Color.Black,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
+            )
+            Spacer(modifier = Modifier.height(8.dp))
             Text(
                 text = "MENU SECTION",
                 fontWeight = FontWeight.Bold,
-                fontSize = 22.sp,
-                color = Color.Black
+                fontSize = 18.sp,
+                color = Color.Gray,
+                modifier = Modifier.align(Alignment.CenterHorizontally)
             )
+            Spacer(modifier = Modifier.height(32.dp))
 
-            Spacer(modifier = Modifier.height(24.dp))
-
-
-            Row(
+            // Grid menu: 2 items per row, square cards
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
                 modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(start = 8.dp),
-                horizontalArrangement = Arrangement.Start
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
-                Text(
-                    text = "USER NAME: ",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = "$userName (SCE1485)",
-                    color = Color.DarkGray
-                )
-            }
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(start = 8.dp),
-                horizontalArrangement = Arrangement.Start
-            ) {
-                Text(
-                    text = "USER ID: ",
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Black
-                )
-                Text(
-                    text = userId,
-                    color = Color.DarkGray
-                )
-            }
-            Spacer(modifier = Modifier.height(24.dp))
-            Column(
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                moduleList.forEach { module ->
+                items(moduleList) { module ->
                     Box(
                         modifier = Modifier
-                            .width(240.dp)
-                            .border(1.dp, Color.Black, shape = RoundedCornerShape(6.dp))
+                            .height(120.dp) // Makes the card square
+                            .border(1.dp, Color.Black, shape = RoundedCornerShape(12.dp))
                             .background(
-                                if (selectedModule == module) Color.LightGray else Color.White,
-                                shape = RoundedCornerShape(6.dp)
+                                if (selectedModule == module.first) Color.LightGray else Color.White,
+                                shape = RoundedCornerShape(12.dp)
                             )
                             .clickable {
-                                selectedModule = module
-                                if (module == "MATERIAL") {
+                                selectedModule = module.first
+                                if (module.first == "MATERIAL") {
                                     navController.navigate(Route.FUEL_ISSUE)
-                                } else {
-                                   // Toast.makeText(LocalContext.current, "No access permission.", Toast.LENGTH_SHORT).show()
                                 }
                             }
-                            .padding(vertical = 12.dp, horizontal = 24.dp),
+                            .padding(8.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = module,
-                            fontWeight = if (selectedModule == module) FontWeight.Bold else FontWeight.Normal,
-                            fontSize = 16.sp,
-                            color = Color.Black
-                        )
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            // Icon at the top
+                            Icon(
+                                imageVector = module.second,
+                                contentDescription = "$module icon",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 12.dp),
+
+                            )
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Text(
+                                text = module.first,
+                                style = TextStyle(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 16.sp,
+                                    color = Color.Black,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                            )
+                        }
                     }
                 }
             }
-
+            Spacer(modifier = Modifier.height(32.dp))
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun ModuleDropdown(
-    navController: NavController,
-    moduleList: List<String>,
-    selectedText: String,
-    onModuleSelected: (String) -> Unit
-) {
-    var expanded by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded },
-        modifier = Modifier.width(280.dp)
-    ) {
-        TextField(
-            value = selectedText,
-            onValueChange = {},
-            readOnly = true,
-            label = { Text("Select Module") },
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier = Modifier
-                .menuAnchor()
-                .height(56.dp)
-
-        )
-
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            moduleList.forEach { module ->
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = module,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.Medium,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    },
-                    onClick = {
-                        onModuleSelected(module)
-                        expanded = false
-                        if (module == "MATERIAL") {
-                            navController.navigate(Route.FUEL_ISSUE)
-                        }
-                    }
-                )
-            }
-        }
-    }
-}
 
 
 

@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.filled.ArrowBack
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,35 +62,32 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         verticalArrangement = Arrangement.spacedBy(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            text = "Vehicle Allocation",
-            fontWeight = FontWeight.Bold,
-            fontSize = 20.sp,
-            modifier = Modifier.padding(top = 30.dp, bottom = 16.dp)
-        )
 
-        /*
-        OutlinedTextField(
-            value = selectedVehicle,
-            onValueChange = {
-                selectedVehicle = it
-                showDropdown = true
-            },
-            label = { Text("Vehicle") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { showDropdown = !showDropdown }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
-                }
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { navController?.popBackStack() }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back"
+                )
             }
-        )*/
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Vehicle Allocation",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .weight(1f)
+            )
+        }
 
-
-        Text(
-            text = "Select Vehicle",
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.align(Alignment.Start)
-        )
 
         var vehicleExpanded by remember { mutableStateOf(false) }
 
@@ -109,7 +108,8 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
                     )
                 },
                 placeholder = { Text("Select Vehicle") },
-                singleLine = true
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp)
             )
 
             DropdownMenu(
@@ -177,9 +177,15 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         Spacer(modifier = Modifier.height(16.dp))
 
 
-        LabelledField(label = "Standard Cons", value = standardCons) { standardCons = it }
-        LabelledField(label = "Prev Reading", value = prevReading) { prevReading = it }
-        LabelledField(label = "Prev Issue Date", value = prevIssueDate) { prevIssueDate = it }
+        LabelledField(label = "Standard Cons", value = standardCons, onValueChange = {
+            standardCons = it
+        })
+        LabelledField(label = "Prev Reading", value = prevReading, onValueChange = {
+            prevReading = it
+        })
+        LabelledField(label = "Prev Issue Date", value = prevIssueDate,onValueChange = {
+            prevIssueDate = it
+        })
 
 
         Text("Meter Status", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
@@ -197,7 +203,8 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
                         contentDescription = null,
                         modifier = Modifier.clickable { statusExpanded = true }
                     )
-                }
+                },
+                shape = RoundedCornerShape(12.dp)
             )
             DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
                 meterStatusOptions.forEach {
@@ -220,7 +227,8 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         val prevReadingDouble = prevReading.toDoubleOrNull() ?: 0.0
         val currentReadingDouble = currentReading.toDoubleOrNull()
 
-        OutlinedTextField(
+        LabelledField(
+            label = "Current Reading",
             value = currentReading,
             onValueChange = {
                 currentReading = it
@@ -239,74 +247,44 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
                     standardQty = "0.000"
                 }
             },
-            label = { Text("Current Reading") },
-            enabled = meterStatus == "METER WORKING",
             isError = currentReadingError.isNotEmpty(),
-            modifier = Modifier.fillMaxWidth()
+            errorText = currentReadingError,
+            enabled = meterStatus == "METER WORKING"
         )
-        if (currentReadingError.isNotEmpty()) {
-            Text(
-                text = currentReadingError,
-                color = Color.Red,
-                fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
 
-
-        OutlinedTextField(
+        LabelledField(
+            label = "Standard Quantity",
             value = standardQty,
             onValueChange = {},
-            label = { Text("Standard Quantity") },
-            isError = false,
-            enabled = true,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            enabled = false
         )
-        if (standardQty.isBlank()) {
-            Text(
-                text = "Enter Quantity in Litre",
-                color = Color.Red,
-                fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.Start)
+
+        LabelledField(label = "Issue Quantity", value = issueQty, onValueChange = {
+            issueQty = it
+
+        })
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Text(text = "Remarks", fontWeight = FontWeight.Bold)
+            Spacer(modifier = Modifier.height(4.dp))
+            OutlinedTextField(
+                value = remarks,
+                onValueChange = { remarks = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(100.dp),
+                singleLine = true,
+                shape = RoundedCornerShape(12.dp),
+                isError = true,
+                enabled = true
             )
-        }
-        Spacer(modifier = Modifier.height(8.dp))
 
 
-        OutlinedTextField(
-            value = issueQty,
-            onValueChange = { issueQty = it },
-            label = { Text("Issue Quantity") },
-            isError = false,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true
-        )
-        if (issueQty.isBlank()) {
-            Text(
-                text = "Quantity in Litre",
-                color = Color.Red,
-                fontSize = 12.sp,
-                modifier = Modifier.align(Alignment.Start)
-            )
         }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-
-        OutlinedTextField(
-            value = remarks,
-            onValueChange = { remarks = it },
-            label = { Text("Remarks") },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(100.dp)
-        )
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Button(onClick = {
+        Button( modifier = Modifier.fillMaxWidth().height(52.dp),onClick = {
 
         }) {
             Text("Submit")
@@ -315,15 +293,34 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
 }
 
 @Composable
-fun LabelledField(label: String, value: String, onValueChange: (String) -> Unit) {
+fun LabelledField(
+    label: String,
+    value: String,
+    onValueChange: (String) -> Unit,
+    isError: Boolean = false,
+    errorText: String = "",
+    enabled: Boolean = true
+) {
     Column(modifier = Modifier.fillMaxWidth()) {
         Text(text = label, fontWeight = FontWeight.Bold)
+        Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             value = value,
             onValueChange = onValueChange,
             modifier = Modifier.fillMaxWidth(),
-            singleLine = true
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp),
+            isError = isError,
+            enabled = enabled
         )
+        if (isError && errorText.isNotEmpty()) {
+            Text(
+                text = errorText,
+                color = Color.Red,
+                fontSize = 12.sp,
+                modifier = Modifier.align(Alignment.Start)
+            )
+        }
         Spacer(modifier = Modifier.height(8.dp))
     }
 }

@@ -58,7 +58,10 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
-            .verticalScroll(scrollState),
+            .verticalScroll(scrollState)
+            .navigationBarsPadding()
+            .imePadding(),
+
         verticalArrangement = Arrangement.spacedBy(3.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -68,24 +71,6 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
             fontSize = 20.sp,
             modifier = Modifier.padding(top = 30.dp, bottom = 16.dp)
         )
-
-        /*
-        OutlinedTextField(
-            value = selectedVehicle,
-            onValueChange = {
-                selectedVehicle = it
-                showDropdown = true
-            },
-            label = { Text("Vehicle") },
-            modifier = Modifier.fillMaxWidth(),
-            trailingIcon = {
-                IconButton(onClick = { showDropdown = !showDropdown }) {
-                    Icon(Icons.Default.ArrowDropDown, contentDescription = "Dropdown")
-                }
-            }
-        )*/
-
-
         Text(
             text = "Select Vehicle",
             fontWeight = FontWeight.Bold,
@@ -135,50 +120,7 @@ fun VehicleAllocationScreen(navController: NavController? = null) {
             }
         }
 
-        /*ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            TextField(
-                value = searchText,
-                onValueChange = {
-                    searchText = it
-                    expanded = true
-                },
-                label = { Text("Select Vehicle") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                colors = ExposedDropdownMenuDefaults.textFieldColors()
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                vehicleList.filter {
-                    it.contains(searchText, ignoreCase = true)
-                }.forEach { item ->
-                    DropdownMenuItem(
-                        text = { Text(item) },
-                        onClick = {
-                            selectedVehicle = item
-                            searchText = item
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }*/
-
         Spacer(modifier = Modifier.height(16.dp))
-
-
         LabelledField(label = "Standard Cons", value = standardCons) { standardCons = it }
         LabelledField(label = "Prev Reading", value = prevReading) { prevReading = it }
         LabelledField(label = "Prev Issue Date", value = prevIssueDate) { prevIssueDate = it }
@@ -336,6 +278,7 @@ fun LabelledField(label: String, value: String, onValueChange: (String) -> Unit)
         Spacer(modifier = Modifier.height(8.dp))
     }
 }
+
 
 @Preview(showBackground = true)
 @Composable

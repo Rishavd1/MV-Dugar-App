@@ -1,5 +1,6 @@
 package com.example.mvdugargroup
 
+import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +14,8 @@ import com.example.mvdugargroup.AppUi.FuelIssueScreen
 import com.example.mvdugargroup.AppUi.LoginScreen
 import com.example.mvdugargroup.AppUi.ModuleListScreen
 import com.example.mvdugargroup.AppUi.VehicleAllocationScreen
+import com.example.mvdugargroup.AppUi.VehicleImageCaptureScreen
+import com.example.mvdugargroup.AppUi.VehicleImagePreviewScreen
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 
 class MainActivity : ComponentActivity() {
@@ -22,11 +25,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             MVDugarGroupTheme {
                 val navController = rememberNavController()
-                    AppNavigator(navController)
+                AppNavigator(navController)
             }
         }
     }
 }
+
 @Composable
 fun AppNavigator(navController: NavHostController) {
     NavHost(navController = navController, startDestination = Route.LOGIN) {
@@ -41,6 +45,17 @@ fun AppNavigator(navController: NavHostController) {
         }
         composable(Route.VEHICLE_ALLOCATION) {
             VehicleAllocationScreen(navController)
+        }
+        composable(Route.VEHICLE_IMAGE_CAPTURE) {
+            VehicleImageCaptureScreen(navController)
+        }
+
+        composable(Route.VEHICLE_IMAGE_PREVIEW) {
+            val imageUriString = navController.previousBackStackEntry
+                ?.savedStateHandle?.get<String>("imageUri")
+            val imageUri = imageUriString?.let { Uri.parse(it) }
+
+            VehicleImagePreviewScreen(navController = navController, imageUri = imageUri)
         }
     }
 }

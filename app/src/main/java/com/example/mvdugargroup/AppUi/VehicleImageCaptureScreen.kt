@@ -1,0 +1,246 @@
+package com.example.mvdugargroup.AppUi
+
+import android.Manifest
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.net.Uri
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.Image
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
+import androidx.navigation.compose.rememberNavController
+import coil.compose.rememberAsyncImagePainter
+import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import java.io.File
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import com.example.mvdugargroup.PermissionDeniedDialog
+import com.example.mvdugargroup.PermissionHandler
+import android.provider.Settings
+import androidx.compose.material.icons.filled.Save
+import androidx.compose.runtime.LaunchedEffect
+import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
+import coil.request.ImageRequest
+import androidx.compose.runtime.livedata.observeAsState
+
+
+@Composable
+fun VehicleImageCaptureScreen(navController: NavController) {
+    val context = LocalContext.current
+
+    val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
+        Manifest.permission.READ_MEDIA_IMAGES
+    else
+        Manifest.permission.READ_EXTERNAL_STORAGE
+
+    val requiredPermissions = listOf(
+        Manifest.permission.CAMERA,
+        storagePermission
+    )
+
+    var permissionGranted by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val allGranted = permissions.values.all { it }
+        permissionGranted = allGranted
+        showPermissionDialog = !allGranted
+    }
+
+    LaunchedEffect(Unit) {
+        val allGranted = requiredPermissions.all {
+            ContextCompat.checkSelfPermission(context, it) == PackageManager.PERMISSION_GRANTED
+        }
+        if (allGranted) {
+            permissionGranted = true
+        } else {
+            permissionLauncher.launch(requiredPermissions.toTypedArray())
+        }
+    }
+
+    if (!permissionGranted && showPermissionDialog) {
+        PermissionDeniedDialog(
+            onDismiss = { showPermissionDialog = false },
+            onSettingsClick = {
+                showPermissionDialog = false
+                val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", context.packageName, null)
+                }
+                context.startActivity(intent)
+            }
+        )
+        return
+    }
+
+    var imageUri by remember { mutableStateOf<Uri?>(null) }
+
+    val confirmedImageUri = navController.currentBackStackEntry
+        ?.savedStateHandle
+        ?.getLiveData<String>("confirmedImageUri")
+        ?.observeAsState()
+
+    LaunchedEffect(confirmedImageUri?.value) {
+        confirmedImageUri?.value?.let {
+            imageUri = Uri.parse(it)
+        }
+    }
+
+    val cameraImageUri = remember { mutableStateOf<Uri?>(null) }
+    val launcherCamera =
+        rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
+            if (success) {
+                cameraImageUri.value?.let { uri ->
+                    navController.currentBackStackEntry?.savedStateHandle?.set(
+                        "imageUri",
+                        uri.toString()
+                    )
+                    navController.navigate("previewImage")
+                }
+            }
+        }
+
+    val launcherGallery =
+        rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                imageUri = it
+                navController.currentBackStackEntry?.savedStateHandle?.set(
+                    "imageUri",
+                    it.toString()
+                )
+                navController.navigate("previewImage")
+            }
+        }
+
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            "Capture Vehicle Meter Image",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 30.dp)
+        )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+                .border(1.dp, Color.Gray),
+            contentAlignment = Alignment.Center
+        ) {
+            imageUri?.let { uri ->
+                val painter = rememberAsyncImagePainter(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(uri)
+                        .crossfade(true)
+                        .build()
+                )
+
+                Image(
+                    painter = painter,
+                    contentDescription = "Vehicle Image",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+            } ?: run {
+                Text("No Image Captured", color = Color.Gray)
+            }
+        }
+
+
+        Button(onClick = {
+            val uri = createImageUri(context)
+            cameraImageUri.value = uri
+            launcherCamera.launch(uri)
+        }) {
+            Icon(Icons.Default.CameraAlt, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Capture Image")
+        }
+
+        Button(onClick = { launcherGallery.launch("image/*") }) {
+            Icon(Icons.Default.Image, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Choose from Gallery")
+        }
+
+        Button(onClick = {  }) {
+            Icon(Icons.Default.Save, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("Save")
+        }
+    }
+}
+
+fun createImageUri(context: Context): Uri {
+    val imageFile = File(context.cacheDir, "vehicle_img_${System.currentTimeMillis()}.jpg")
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        imageFile
+    )
+}
+
+
+fun saveBitmapToCache(context: Context, bitmap: Bitmap): Uri {
+    val filename = "vehicle_image_${System.currentTimeMillis()}.png"
+    val file = File(context.cacheDir, filename)
+    file.outputStream().use {
+        bitmap.compress(Bitmap.CompressFormat.JPEG, 100, it)
+    }
+    return FileProvider.getUriForFile(
+        context,
+        "${context.packageName}.provider",
+        file
+    )
+}
+
+
+@Preview(showBackground = true)
+@Composable
+fun VehicleImageCaptureScreenPreview() {
+    val dummyNavController = rememberNavController()
+    MVDugarGroupTheme {
+        VehicleImageCaptureScreen(navController = dummyNavController)
+    }
+
+}
+

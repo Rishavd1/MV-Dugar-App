@@ -57,8 +57,28 @@ dependencies {
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("androidx.compose.material:material-icons-extended-android:1.7.8")
-    implementation("androidx.navigation:navigation-compose:2.8.0")
+    implementation("androidx.navigation:navigation-compose:2.9.2")
+    implementation("androidx.compose.runtime:runtime-livedata:1.6.0")
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
+    implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.2")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
 
+
+    /*implementation("io.insert-koin:koin-android:4.1.0")
+    implementation("io.insert-koin:koin-androidx-compose:4.1.0")
+
+
+    implementation("io.ktor:ktor-client-core:3.2.2")
+    implementation("io.ktor:ktor-client-okhttp:3.2.2")
+    implementation("io.ktor:ktor-client-content-negotiation:3.2.2")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:3.2.2")
+    implementation("io.ktor:ktor-client-logging:3.2.2")*/
 
 
 }

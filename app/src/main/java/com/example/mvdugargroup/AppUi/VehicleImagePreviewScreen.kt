@@ -19,10 +19,12 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.ui.Alignment
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?) {
+fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,sharedViewModel: SharedViewModel = viewModel()) {
     Scaffold(
         topBar = {
             TopAppBar(

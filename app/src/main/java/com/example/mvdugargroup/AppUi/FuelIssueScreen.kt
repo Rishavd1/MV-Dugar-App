@@ -42,14 +42,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FuelIssueScreen(navController: NavController? = null) {
+fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
     val fuelTypes = listOf("Diesel High Speed", "Petrol", "CNG")
     val businessUnits = listOf("Lapche Khola - Sumo", "Unit B", "Unit C")
     val warehouses = listOf("Warehouse A", "Warehouse B", "Warehouse C")

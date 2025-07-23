@@ -51,13 +51,13 @@ import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Settings
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModuleListScreen(
-    navController: NavController,
-    userName: String = "Somnath Das",
-    userId: String = "somnathd"
+    navController: NavController,sharedViewModel: SharedViewModel = viewModel()
 ) {
     val moduleList = listOf(
         "MATERIAL" to Icons.Default.Inventory,       // Represents materials/items
@@ -83,7 +83,7 @@ fun ModuleListScreen(
             // User name at the top, centered
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = userName,
+                text = "SOMNATH DAS",
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = Color.Black,

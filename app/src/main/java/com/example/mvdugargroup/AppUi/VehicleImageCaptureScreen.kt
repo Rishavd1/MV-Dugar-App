@@ -40,24 +40,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberAsyncImagePainter
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import java.io.File
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.mvdugargroup.PermissionDeniedDialog
-import com.example.mvdugargroup.PermissionHandler
 import android.provider.Settings
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import coil.request.ImageRequest
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 
 @Composable
-fun VehicleImageCaptureScreen(navController: NavController) {
+fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
     val context = LocalContext.current
 
     val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)

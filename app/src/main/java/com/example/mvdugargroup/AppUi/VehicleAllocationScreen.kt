@@ -23,10 +23,12 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleAllocationScreen(navController: NavController? = null) {
+fun VehicleAllocationScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
     val scrollState = rememberScrollState()
     val vehicleList = listOf(
         "LMVMBC001 - BOLERO CAMPER BSIII - BA 18 CHA 5928",

@@ -24,11 +24,15 @@ import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun VehicleAllocationScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
+fun VehicleAllocationScreen(
+    navController: NavController,
+    sharedViewModel: SharedViewModel = viewModel()
+) {
     val scrollState = rememberScrollState()
     val vehicleList = listOf(
         "LMVMBC001 - BOLERO CAMPER BSIII - BA 18 CHA 5928",
@@ -185,12 +189,16 @@ fun VehicleAllocationScreen(navController: NavController,sharedViewModel: Shared
         LabelledField(label = "Prev Reading", value = prevReading, onValueChange = {
             prevReading = it
         })
-        LabelledField(label = "Prev Issue Date", value = prevIssueDate,onValueChange = {
+        LabelledField(label = "Prev Issue Date", value = prevIssueDate, onValueChange = {
             prevIssueDate = it
         })
 
 
-        Text("Meter Status", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(
+            "Meter Status",
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.Start)
+        )
         var statusExpanded by remember { mutableStateOf(false) }
 
         Box(modifier = Modifier.fillMaxWidth()) {
@@ -276,21 +284,24 @@ fun VehicleAllocationScreen(navController: NavController,sharedViewModel: Shared
                     .height(100.dp),
                 singleLine = true,
                 shape = RoundedCornerShape(12.dp),
-                isError = true,
+                isError = false,
                 enabled = true
             )
 
 
         }
 
-
         Spacer(modifier = Modifier.height(8.dp))
-
-        Button( modifier = Modifier.fillMaxWidth().height(52.dp),onClick = {
-
+        Button(modifier = Modifier
+            .fillMaxWidth()
+            .height(52.dp), onClick = {
+            navController.navigate(Route.VEHICLE_IMAGE_CAPTURE) {
+                popUpTo(Route.MODULE_LIST) { inclusive = true }
+            }
         }) {
-            Text("Submit")
+            Text("NEXT")
         }
+        Spacer(modifier = Modifier.height(40.dp))
     }
 }
 

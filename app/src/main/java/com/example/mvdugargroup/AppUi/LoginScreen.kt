@@ -30,9 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -48,6 +46,7 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.R
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @Composable
@@ -55,21 +54,13 @@ fun LoginScreen(navController: NavController,
                 sharedViewModel: SharedViewModel = viewModel()) {
 
     val navigateToHome by sharedViewModel.navigateToHome.collectAsState()
-
-    LaunchedEffect(navigateToHome) {
-        if (navigateToHome) {
-            navController.navigate(Route.MODULE_LIST) {
-                popUpTo(Route.LOGIN) { inclusive = true }
-            }
-        }
-    }
-
     val username by remember { sharedViewModel::username }
     val password by remember { sharedViewModel::password }
     val rememberMe by remember { sharedViewModel::rememberMe }
     val passwordVisible by remember { sharedViewModel::passwordVisible }
     val isLoading by sharedViewModel.isLoading.collectAsState()
     val errorMessage by sharedViewModel.errorMessage.collectAsState()
+
 
     LaunchedEffect(navigateToHome) {
         if (navigateToHome) {
@@ -83,13 +74,7 @@ fun LoginScreen(navController: NavController,
         modifier = Modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background
     ) {
-        if (errorMessage != null) {
-            Text(
-                text = errorMessage ?: "",
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
-        }
+
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -120,7 +105,7 @@ fun LoginScreen(navController: NavController,
 
             OutlinedTextField(
                 value = username,
-                onValueChange = { sharedViewModel::onUsernameChange },
+                onValueChange = { sharedViewModel.onUsernameChange(it) },
                 label = { Text("Username") },
                 leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                 singleLine = true,
@@ -132,13 +117,13 @@ fun LoginScreen(navController: NavController,
 
             OutlinedTextField(
                 value = password,
-                onValueChange = { sharedViewModel::onPasswordChange },
+                onValueChange = { sharedViewModel.onPasswordChange(it) },
                 label = { Text("Password") },
                 leadingIcon = { Icon(Icons.Default.Lock, contentDescription = null) },
                 trailingIcon = {
                     val icon =
                         if (passwordVisible) Icons.Default.VisibilityOff else Icons.Default.Visibility
-                    IconButton(onClick = { sharedViewModel::togglePasswordVisibility }) {
+                    IconButton(onClick = { sharedViewModel.togglePasswordVisibility() }) {
                         Icon(icon, contentDescription = "Toggle Password Visibility")
                     }
                 },
@@ -156,7 +141,7 @@ fun LoginScreen(navController: NavController,
             ) {
                 Checkbox(
                     checked = rememberMe,
-                    onCheckedChange = { sharedViewModel::onRememberMeChange }
+                    onCheckedChange = { sharedViewModel.onRememberMeChange(it) }
                 )
                 Text("Remember me")
             }
@@ -164,7 +149,12 @@ fun LoginScreen(navController: NavController,
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
-                onClick = { sharedViewModel.onLoginSuccess() },
+                onClick = {
+                    navController.navigate(Route.MODULE_LIST) {
+                        popUpTo(Route.LOGIN) { inclusive = true }
+                    }
+                   // sharedViewModel.onLoginSuccess()
+                          },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -176,7 +166,7 @@ fun LoginScreen(navController: NavController,
             Spacer(modifier = Modifier.height(12.dp))
 
             OutlinedButton(
-                onClick = { sharedViewModel::reset },
+                onClick = { sharedViewModel.reset() },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -184,7 +174,15 @@ fun LoginScreen(navController: NavController,
             ) {
                 Text("RESET", style = MaterialTheme.typography.labelLarge)
             }
+            if (errorMessage != null) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = errorMessage ?: "",
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
         }
+        LoaderDialog(isShowing = isLoading)
     }
 }
 

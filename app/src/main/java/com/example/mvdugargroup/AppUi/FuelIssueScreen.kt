@@ -80,6 +80,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Top Row with Back Button and Title
+        Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -251,7 +252,9 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         // Buttons
         Button(
             onClick = {
-                navController?.navigate(Route.VEHICLE_ALLOCATION)
+                navController.navigate(Route.VEHICLE_ALLOCATION){
+                    popUpTo(Route.MODULE_LIST) { inclusive = true }
+                }
             },
             modifier = Modifier.fillMaxWidth().height(52.dp),
             shape = RoundedCornerShape(12.dp)

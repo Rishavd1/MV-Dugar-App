@@ -46,7 +46,6 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Inventory
@@ -71,6 +70,7 @@ fun ModuleListScreen(
 
     Box(
         modifier = Modifier
+            .padding(24.dp)
             .fillMaxSize()
             .background(Color.White),
         contentAlignment = Alignment.TopCenter
@@ -99,7 +99,7 @@ fun ModuleListScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Grid menu: 2 items per row, square cards
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier

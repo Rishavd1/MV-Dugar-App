@@ -1,4 +1,22 @@
 package com.example.mvdugargroup.Api
 
-data class LoginRequest(val username: String, val password: String)
-data class LoginResponse(val token: String, val userId: String)
+import kotlinx.serialization.Serializable
+
+@Serializable
+data class LoginRequest(
+    val UserName: String,
+    val Password: String
+)
+
+@Serializable
+data class LoginResponse(
+    val statusCode: Int,
+    val result: LoginDetailsResponse
+)
+
+@Serializable
+data class LoginDetailsResponse(
+    val id: Int,
+    val userName: String,
+    val name: String
+)

@@ -150,10 +150,10 @@ fun LoginScreen(navController: NavController,
 
             Button(
                 onClick = {
-                    navController.navigate(Route.MODULE_LIST) {
+                   /* navController.navigate(Route.MODULE_LIST) {
                         popUpTo(Route.LOGIN) { inclusive = true }
-                    }
-                   // sharedViewModel.onLoginSuccess()
+                    }*/
+                    sharedViewModel.onLoginSuccess()
                           },
                 modifier = Modifier
                     .fillMaxWidth()

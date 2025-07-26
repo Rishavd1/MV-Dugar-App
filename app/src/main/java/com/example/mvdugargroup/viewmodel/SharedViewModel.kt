@@ -1,17 +1,19 @@
 package com.example.mvdugargroup.viewmodel
 
 import android.app.Application
+import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.mvdugargroup.Api.LoginRequest
-import com.example.mvdugargroup.Api.RetrofitInstance
+
+import com.example.mvdugargroup.network.RetrofitInstance
 import com.example.mvdugargroup.sharedPreference.PreferenceManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import retrofit2.Response
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -72,22 +74,27 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
+
             try {
-                val response = RetrofitInstance.api.login(
-                    LoginRequest(username, password)
-                )
-                if (response.isSuccessful && response.body()?.token != null) {
-                    val token = response.body()?.token.orEmpty()
+                val response = RetrofitInstance.api.login(username, password)
+
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val userId = response.body()?.result?.id
+                    Log.e("userId", "$userId")
                     prefs.saveRememberMe(rememberMe)
                     _navigateToHome.value = true
                 } else {
-                    _errorMessage.value = "Login failed: ${response.code()}"
+                    _errorMessage.value = "Login failed: ${response.code()} ${response.message()}"
+                    Log.e("LoginError", "Code: ${response.code()}, Message: ${response.message()}")
                 }
+
             } catch (e: Exception) {
-                _errorMessage.value = "Network error: ${e.localizedMessage}"
+                _errorMessage.value = "Network error: ${e.localizedMessage ?: "Unknown error"}"
+                Log.e("LoginException", e.message ?: "Unknown exception")
             } finally {
                 _isLoading.value = false
             }
         }
     }
+
 }

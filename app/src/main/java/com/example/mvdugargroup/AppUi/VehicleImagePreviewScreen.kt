@@ -16,15 +16,25 @@ import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.viewmodel.SharedViewModel
+import kotlinx.coroutines.coroutineScope
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,sharedViewModel: SharedViewModel = viewModel()) {
+    val snackbarHostState = remember { SnackbarHostState() }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -64,11 +74,24 @@ fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,share
                         .fillMaxWidth()
                         .aspectRatio(4f / 3f) // Or fillMaxHeight() for better vertical usage
                 )
+                /*Button(
+                    onClick = {
+                        navController.navigate(Route.FUEL_ISSUE_VIEW) {
+                            popUpTo(Route.VEHICLE_IMAGE_CAPTURE) { inclusive = true }
+                        }
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp)
+                ) {
+                    Text("Save")
+                }*/
             } else {
                 Text("No Image to display")
             }
         }
     }
 }
+
 
 

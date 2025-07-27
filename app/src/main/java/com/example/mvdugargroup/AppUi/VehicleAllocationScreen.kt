@@ -69,7 +69,7 @@ fun VehicleAllocationScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
 
-
+        Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -77,7 +77,7 @@ fun VehicleAllocationScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController?.popBackStack() }
+                onClick = { navController.popBackStack() }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -301,7 +301,7 @@ fun VehicleAllocationScreen(
         }) {
             Text("NEXT")
         }
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(25.dp))
     }
 }
 

@@ -98,7 +98,7 @@ fun AppNavigator(navController: NavHostController) {
                 sharedViewModel = sharedViewModel
             )
         }
-        composable(Route.VEHICLE_IMAGE_CAPTURE) {
+        composable(Route.FUEL_ISSUE_VIEW) {
             FuelIssueViewScreen(navController, sharedViewModel)
         }
     }

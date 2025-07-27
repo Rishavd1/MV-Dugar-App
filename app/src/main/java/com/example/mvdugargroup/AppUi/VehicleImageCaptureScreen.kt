@@ -46,7 +46,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.mvdugargroup.PermissionDeniedDialog
 import android.provider.Settings
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
@@ -54,6 +58,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 
@@ -153,12 +158,36 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            "Capture Vehicle Meter Image",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 30.dp)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { navController.navigate(Route.VEHICLE_ALLOCATION) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Capture Vehicle Meter Image",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .weight(1f)
+            )
+        }
+            /*Text(
+                "Capture Vehicle Meter Image",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 30.dp)
+            )*/
 
         Box(
             modifier = Modifier
@@ -203,7 +232,11 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
             Text("Choose from Gallery")
         }
 
-        Button(onClick = {  }) {
+        Button(onClick = {
+            navController.navigate(Route.FUEL_ISSUE_VIEW){
+                popUpTo(Route.VEHICLE_ALLOCATION){inclusive = true}
+            }
+        }) {
             Icon(Icons.Default.Save, contentDescription = null)
             Spacer(Modifier.width(8.dp))
             Text("Save")

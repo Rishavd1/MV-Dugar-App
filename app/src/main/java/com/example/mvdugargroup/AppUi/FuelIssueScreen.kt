@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -31,6 +32,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -52,12 +54,18 @@ import com.example.mvdugargroup.viewmodel.SharedViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
-    val fuelTypes = listOf("Diesel High Speed", "Petrol", "CNG")
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.fetchFuelTypes()
+    }
+
+    val fuelTypes = sharedViewModel.fuelTypes.value?.map { it.itemType }?: emptyList()
+        //listOf("Diesel High Speed", "Petrol", "CNG")
     val businessUnits = listOf("Lapche Khola - Sumo", "Unit B", "Unit C")
     val warehouses = listOf("Warehouse A", "Warehouse B", "Warehouse C")
 
     var issueNo by remember { mutableStateOf("") }
-    var selectedFuelType by remember { mutableStateOf(fuelTypes[0]) }
+    var selectedFuelType by remember { mutableStateOf("") }
     var selectedBusinessUnit by remember { mutableStateOf(businessUnits[0]) }
     var selectedWarehouse by remember { mutableStateOf(warehouses[0]) }
 
@@ -70,6 +78,24 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
 
     val scrollState = rememberScrollState()
 
+    LaunchedEffect(fuelTypes) {
+        if (fuelTypes.isNotEmpty()) {
+            selectedFuelType = fuelTypes[0]
+        }
+    }
+
+    /*// Show loading if fuel types are still empty (data loading)
+    if (fuelTypes.isEmpty()) {
+        // Centered loading indicator
+        Box(
+            modifier = Modifier
+                .fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator()
+        }
+        return // Don't render the rest yet
+    }*/
     Column(
         modifier = Modifier
             .padding(24.dp)
@@ -88,7 +114,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController?.popBackStack() }
+                onClick = { navController.popBackStack() }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,

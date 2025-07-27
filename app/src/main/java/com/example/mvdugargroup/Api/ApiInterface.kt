@@ -10,4 +10,7 @@ interface ApiInterface {
         @Query("UserName") userName: String?,
         @Query("Password") password: String?
     ): Response<LoginResponse>
+
+    @GET("FuelIssueRequest/GetItem")
+    suspend fun fetchFuelTypes(): Response<FuelTypeResponse>
 }

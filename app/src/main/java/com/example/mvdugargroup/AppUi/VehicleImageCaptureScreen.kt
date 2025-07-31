@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.mvdugargroup.PermissionDeniedDialog
 import android.provider.Settings
+import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -192,7 +193,7 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
+                .height(300.dp)
                 .border(1.dp, Color.Gray),
             contentAlignment = Alignment.Center
         ) {
@@ -207,7 +208,7 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
                 Image(
                     painter = painter,
                     contentDescription = "Vehicle Image",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillHeight,
                     modifier = Modifier.fillMaxSize()
                 )
             } ?: run {
@@ -216,31 +217,52 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
         }
 
 
-        Button(onClick = {
-            val uri = createImageUri(context)
-            cameraImageUri.value = uri
-            launcherCamera.launch(uri)
-        }) {
-            Icon(Icons.Default.CameraAlt, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Capture Image")
-        }
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = {
+                    val uri = createImageUri(context)
+                    cameraImageUri.value = uri
+                    launcherCamera.launch(uri)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
 
-        Button(onClick = { launcherGallery.launch("image/*") }) {
-            Icon(Icons.Default.Image, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Choose from Gallery")
-        }
-
-        Button(onClick = {
-            navController.navigate(Route.FUEL_ISSUE_VIEW){
-                popUpTo(Route.VEHICLE_ALLOCATION){inclusive = true}
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Capture Image")
             }
-        }) {
-            Icon(Icons.Default.Save, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Save")
+
+            Button(
+                onClick = { launcherGallery.launch("image/*") },
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.Image, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Choose from Gallery")
+            }
+
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                    navController.navigate(Route.FUEL_ISSUE_VIEW) {
+                        popUpTo(Route.VEHICLE_ALLOCATION) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Save")
+            }
         }
+
     }
 }
 

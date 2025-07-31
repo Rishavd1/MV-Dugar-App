@@ -9,6 +9,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import com.example.mvdugargroup.Api.BusinessUnit
 import com.example.mvdugargroup.Api.FuelType
 
 import com.example.mvdugargroup.network.RetrofitInstance
@@ -123,10 +124,37 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 _errorMessage.value = "Exception: ${e.localizedMessage}"
                 Log.e("FuelTypeException", e.toString())
             } finally {
-                _isLoading.value = false
+                fetchBusinessUnit()
+                //_isLoading.value = false
             }
         }
     }
 
+    private val _businessType = MutableLiveData<List<BusinessUnit>>()
+    val businessType: LiveData<List<BusinessUnit>> = _businessType
+
+    suspend fun fetchBusinessUnit(){
+      //  viewModelScope.launch {
+            _errorMessage.value = null
+            try {
+                val response = RetrofitInstance.api.fetchBusinessUnit()
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val businessUnits = response.body()?.result ?: emptyList()
+                    Log.d("businessUnits", businessUnits.toString())
+                    _businessType.value = businessUnits
+                } else {
+                    _businessType.value = emptyList()
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("businessUnits", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+            }catch (e: Exception){
+                _businessType.value = emptyList()
+                _errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("businessUnits", "Exception $e")
+            }finally {
+                _isLoading.value = false
+            }
+       // }
+    }
 
 }

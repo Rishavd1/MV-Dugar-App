@@ -116,7 +116,7 @@ fun ModuleListScreen(
                             .clickable {
                                 selectedModule = module.first
                                 if (module.first == "MATERIAL") {
-                                    navController.navigate(Route.FUEL_ISSUE)
+                                    navController.navigate(Route.FUEL_ISSUE_VIEW)
                                 }
                             }
                             .padding(8.dp),

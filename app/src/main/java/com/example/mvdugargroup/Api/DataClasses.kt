@@ -1,5 +1,6 @@
 package com.example.mvdugargroup.Api
 
+import com.google.gson.annotations.SerializedName
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -25,4 +26,18 @@ data class FuelTypeResponse(
 data class FuelType(
     val itemId: Int,
     val itemType: String
+)
+
+@Serializable
+data class BusinessUnitResponse(
+    val statusCode: Int,
+    val result: List<BusinessUnit>
+)
+
+@Serializable
+data class BusinessUnit(
+    @SerializedName("buId")
+    val businessUnitId: Int,
+    @SerializedName("buDesc")
+    val businessUnitDesc: String
 )

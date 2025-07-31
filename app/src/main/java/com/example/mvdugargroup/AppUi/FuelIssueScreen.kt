@@ -1,8 +1,5 @@
 package com.example.mvdugargroup.AppUi
 
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,19 +13,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,7 +32,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -60,13 +52,14 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
     }
 
     val fuelTypes = sharedViewModel.fuelTypes.value?.map { it.itemType }?: emptyList()
-        //listOf("Diesel High Speed", "Petrol", "CNG")
-    val businessUnits = listOf("Lapche Khola - Sumo", "Unit B", "Unit C")
+    val businessUnit = sharedViewModel.businessType.value?.map { it.businessUnitDesc }?:emptyList()
+
+    //val businessUnits = listOf("Lapche Khola - Sumo", "Unit B", "Unit C")
     val warehouses = listOf("Warehouse A", "Warehouse B", "Warehouse C")
 
     var issueNo by remember { mutableStateOf("") }
     var selectedFuelType by remember { mutableStateOf("") }
-    var selectedBusinessUnit by remember { mutableStateOf(businessUnits[0]) }
+    var selectedBusinessUnit by remember { mutableStateOf("") }
     var selectedWarehouse by remember { mutableStateOf(warehouses[0]) }
 
     var fuelTypeExpanded by remember { mutableStateOf(false) }
@@ -82,30 +75,19 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         if (fuelTypes.isNotEmpty()) {
             selectedFuelType = fuelTypes[0]
         }
+        if (businessUnit.isNotEmpty()){
+            selectedBusinessUnit = businessUnit[0]
+        }
     }
 
-    /*// Show loading if fuel types are still empty (data loading)
-    if (fuelTypes.isEmpty()) {
-        // Centered loading indicator
-        Box(
-            modifier = Modifier
-                .fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            CircularProgressIndicator()
-        }
-        return // Don't render the rest yet
-    }*/
     Column(
         modifier = Modifier
             .padding(24.dp)
             .fillMaxSize()
             .verticalScroll(scrollState),
-        // Remove or reduce the global vertical spacing
-        // verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // Top Row with Back Button and Title
+
         Spacer(modifier = Modifier.height(24.dp))
         Row(
             modifier = Modifier
@@ -129,8 +111,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 modifier = Modifier.weight(1f)
             )
         }
-
-        // Issue No
         Text("Issue No", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
@@ -195,7 +175,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Business Unit Dropdown
         Text("Business Unit", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         ExposedDropdownMenuBox(
@@ -216,7 +195,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 expanded = businessUnitExpanded,
                 onDismissRequest = { businessUnitExpanded = false }
             ) {
-                businessUnits.forEach { unit ->
+                businessUnit.forEach { unit ->
                     DropdownMenuItem(
                         text = { Text(unit) },
                         onClick = {
@@ -229,7 +208,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         }
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Warehouse Dropdown
         Text("Warehouse", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         ExposedDropdownMenuBox(
@@ -275,7 +253,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         )
         Spacer(modifier = Modifier.height(20.dp))
 
-        // Buttons
         Button(
             onClick = {
                 navController.navigate(Route.VEHICLE_ALLOCATION){

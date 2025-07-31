@@ -13,4 +13,8 @@ interface ApiInterface {
 
     @GET("FuelIssueRequest/GetItem")
     suspend fun fetchFuelTypes(): Response<FuelTypeResponse>
+
+    @GET("FuelIssueRequest/GetBusinessUnit")
+    suspend fun fetchBusinessUnit(): Response<BusinessUnitResponse>
+
 }

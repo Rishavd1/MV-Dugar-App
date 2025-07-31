@@ -334,7 +334,7 @@ fun LabelledField(
                 modifier = Modifier.align(Alignment.Start)
             )
         }
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(15.dp))
     }
 }
 

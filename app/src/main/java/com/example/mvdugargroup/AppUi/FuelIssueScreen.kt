@@ -1,5 +1,9 @@
 package com.example.mvdugargroup.AppUi
 
+import android.util.Log
+import androidx.compose.foundation.border
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -14,7 +18,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,15 +26,20 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusProperties
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -41,7 +49,12 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
+import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
+import java.time.LocalDate
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,34 +64,64 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         sharedViewModel.fetchFuelTypes()
     }
 
-    val fuelTypes = sharedViewModel.fuelTypes.value?.map { it.itemType }?: emptyList()
-    val businessUnit = sharedViewModel.businessType.value?.map { it.businessUnitDesc }?:emptyList()
+    val fuelTypesName = sharedViewModel.fuelTypes.value?.map { it.itemType }?: emptyList()
+    val businessUnitName = sharedViewModel.businessType.value?.map { it.businessUnitDesc }?:emptyList()
+    val warehousesName = sharedViewModel.warehouse.value?.map{ it.warehouseDesc}?:emptyList()
+    val stockQuantity by sharedViewModel.stockQuantity.observeAsState()
 
-    //val businessUnits = listOf("Lapche Khola - Sumo", "Unit B", "Unit C")
-    val warehouses = listOf("Warehouse A", "Warehouse B", "Warehouse C")
+
+    val isLoading by sharedViewModel.isLoading.collectAsState()
 
     var issueNo by remember { mutableStateOf("") }
     var selectedFuelType by remember { mutableStateOf("") }
     var selectedBusinessUnit by remember { mutableStateOf("") }
-    var selectedWarehouse by remember { mutableStateOf(warehouses[0]) }
+    var selectedWarehouse by remember { mutableStateOf("") }
+
 
     var fuelTypeExpanded by remember { mutableStateOf(false) }
     var businessUnitExpanded by remember { mutableStateOf(false) }
     var warehouseExpanded by remember { mutableStateOf(false) }
 
     var stock by remember { mutableStateOf("0.000") }
-    val issueDate = "06-Jul-2025"
+    val issueDate: String = LocalDate.now()
+        .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH))
 
     val scrollState = rememberScrollState()
 
-    LaunchedEffect(fuelTypes) {
-        if (fuelTypes.isNotEmpty()) {
-            selectedFuelType = fuelTypes[0]
+    LaunchedEffect(fuelTypesName,businessUnitName) {
+        if (fuelTypesName.isNotEmpty()) {
+            selectedFuelType = fuelTypesName[0]
         }
-        if (businessUnit.isNotEmpty()){
-            selectedBusinessUnit = businessUnit[0]
+        if (businessUnitName.isNotEmpty()){
+            selectedBusinessUnit = businessUnitName[1]  //TODO
+
+            val ftId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId
+            val buId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId
+            if (ftId != null && buId != null) {
+                sharedViewModel.fetchWarehouse(buId, ftId)
+            }
         }
     }
+    LaunchedEffect(warehousesName) {
+        if (warehousesName.isNotEmpty() && selectedWarehouse.isEmpty()) {
+            selectedWarehouse = warehousesName[0]
+        }
+        val ftId = sharedViewModel.fuelTypes.value
+            ?.find { it.itemType == selectedFuelType }?.itemId
+        val buId = sharedViewModel.businessType.value
+            ?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId
+        val whId = sharedViewModel.warehouse.value
+            ?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId
+
+        if (ftId != null && buId != null && whId != null) {
+            sharedViewModel.fetchStockQuantity(buId, ftId, whId)
+        }
+    }
+
+    val stockDisplay = stockQuantity?.stockQuantity?.let {
+        String.format("%.3f", it)
+    } ?: "0.0"
+
 
     Column(
         modifier = Modifier
@@ -111,21 +154,35 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 modifier = Modifier.weight(1f)
             )
         }
-        Text("Issue No", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+       // Text("Issue No", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
+        /*val interactionSource = remember { MutableInteractionSource() }
+
         OutlinedTextField(
-            value = issueNo,
-            onValueChange = { issueNo = it },
+            value = "ISSUENO",  //issueNo
+            onValueChange = { *//* no-op since readOnly *//* },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
-            shape = RoundedCornerShape(12.dp)
-        )
+            shape = RoundedCornerShape(12.dp),
+            readOnly = true,
+            enabled = false,
+            interactionSource = interactionSource,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Gray,
+                unfocusedBorderColor = Color.Gray,
+                focusedLabelColor = Color.Gray,
+                unfocusedLabelColor = Color.Gray,
+                cursorColor = Color.Transparent
+            )
+        )*/
+        ReadOnlyNoFocusField("Issue No","issue1") //issueNo
         Spacer(modifier = Modifier.height(12.dp))
 
         // Issue Date
-        Text("Issue Date", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+//        Text("Issue Date", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
+        ReadOnlyNoFocusField("Issue Date",issueDate)
+        /*OutlinedTextField(
             value = issueDate,
             onValueChange = {},
             readOnly = true,
@@ -138,7 +195,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                     contentDescription = "Calendar"
                 )
             }
-        )
+        )*/
         Spacer(modifier = Modifier.height(12.dp))
 
         // Fuel Type Dropdown
@@ -150,7 +207,8 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         ) {
             OutlinedTextField(
                 value = selectedFuelType,
-                onValueChange = {},
+                onValueChange = {
+                   },
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(fuelTypeExpanded) },
                 modifier = Modifier
@@ -162,12 +220,19 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 expanded = fuelTypeExpanded,
                 onDismissRequest = { fuelTypeExpanded = false }
             ) {
-                fuelTypes.forEach { type ->
+                fuelTypesName.forEach { type ->
                     DropdownMenuItem(
                         text = { Text(type) },
                         onClick = {
                             selectedFuelType = type
                             fuelTypeExpanded = false
+                            val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                            val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
+                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+
+                            if (selectedFuelTypeId != null && selectedBusinessUnitId != null) {
+                                sharedViewModel.fetchWarehouse(selectedBusinessUnitId, selectedFuelTypeId)
+                            }
                         }
                     )
                 }
@@ -183,7 +248,9 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         ) {
             OutlinedTextField(
                 value = selectedBusinessUnit,
-                onValueChange = {},
+                onValueChange = {
+
+                },
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(businessUnitExpanded) },
                 modifier = Modifier
@@ -195,12 +262,19 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 expanded = businessUnitExpanded,
                 onDismissRequest = { businessUnitExpanded = false }
             ) {
-                businessUnit.forEach { unit ->
+                businessUnitName.forEach { unit ->
                     DropdownMenuItem(
                         text = { Text(unit) },
                         onClick = {
                             selectedBusinessUnit = unit
                             businessUnitExpanded = false
+                            val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                            val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
+                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+
+                            if (selectedFuelTypeId != null && selectedBusinessUnitId != null) {
+                                sharedViewModel.fetchWarehouse(selectedBusinessUnitId, selectedFuelTypeId)
+                            }
                         }
                     )
                 }
@@ -216,7 +290,9 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         ) {
             OutlinedTextField(
                 value = selectedWarehouse,
-                onValueChange = {},
+                onValueChange = {
+
+                },
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(warehouseExpanded) },
                 modifier = Modifier
@@ -228,12 +304,20 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 expanded = warehouseExpanded,
                 onDismissRequest = { warehouseExpanded = false }
             ) {
-                warehouses.forEach { warehouse ->
+                warehousesName.forEach { warehouse ->
                     DropdownMenuItem(
                         text = { Text(warehouse) },
                         onClick = {
                             selectedWarehouse = warehouse
                             warehouseExpanded = false
+                            val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                            val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
+                            val selectedWarehouseId = sharedViewModel.warehouse.value?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId!!
+                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+
+                            if (selectedFuelTypeId != null && selectedBusinessUnitId != null && selectedWarehouseId != null) {
+                                sharedViewModel.fetchStockQuantity(selectedBusinessUnitId, selectedFuelTypeId,selectedWarehouseId)
+                            }
                         }
                     )
                 }
@@ -242,7 +326,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         Spacer(modifier = Modifier.height(12.dp))
 
         // Stock
-        Text("Stock", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        /*Text("Stock", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         OutlinedTextField(
             value = stock,
@@ -250,7 +334,8 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
             shape = RoundedCornerShape(12.dp)
-        )
+        )*/
+        ReadOnlyNoFocusField("Stock",stockDisplay)
         Spacer(modifier = Modifier.height(20.dp))
 
         Button(
@@ -259,14 +344,66 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                     popUpTo(Route.MODULE_LIST) { inclusive = true }
                 }
             },
-            modifier = Modifier.fillMaxWidth().height(52.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
             shape = RoundedCornerShape(12.dp)
         ) {
             Text("Next")
         }
-
+        LoaderDialog(isShowing = isLoading)
     }
 }
+
+@Composable
+fun ReadOnlyNoFocusField(label: String, value: String) {
+    Column {
+        Text(text = label
+            , fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Spacer(Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color.Gray,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(text = value, color = Color.Black)
+        }
+    }
+}
+
+/*@Composable
+fun ReadOnlyNoFocusField(value: String) {
+    val interactionSource = remember { MutableInteractionSource() }
+
+    OutlinedTextField(
+        value = value,
+        onValueChange = { },
+        modifier = Modifier
+            .fillMaxWidth()
+            .focusProperties { canFocus = false }, // prevent gaining focus
+        singleLine = true,
+        shape = RoundedCornerShape(12.dp),
+        readOnly = true,
+        interactionSource = interactionSource, // suppress ripple/focus visuals
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Color.Gray,
+            unfocusedBorderColor = Color.Gray,
+            focusedLabelColor = Color.Black,
+            unfocusedLabelColor = Color.Black,
+            textColor = Color.Black,
+            cursorColor = Color.Transparent,
+            disabledTextColor = Color.Black // in case something treats it as disabled internally
+        )
+    )
+}*/
+
 
 @Preview(showBackground = true)
 @Composable

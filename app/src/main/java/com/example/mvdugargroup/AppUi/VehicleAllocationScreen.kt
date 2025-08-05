@@ -1,6 +1,7 @@
 package com.example.mvdugargroup.AppUi
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -23,8 +24,10 @@ import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mvdugargroup.Route
+import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -33,7 +36,12 @@ fun VehicleAllocationScreen(
     navController: NavController,
     sharedViewModel: SharedViewModel = viewModel()
 ) {
+
+
     val scrollState = rememberScrollState()
+    val isLoading by sharedViewModel.isLoading.collectAsState()
+    val meterStatusList by sharedViewModel.meterStatus.observeAsState(emptyList())
+
     val vehicleList = listOf(
         "LMVMBC001 - BOLERO CAMPER BSIII - BA 18 CHA 5928",
         "LMVMBC002 - BOLERO CAMPER BSIV - BA 18 CHA 5929",
@@ -47,8 +55,8 @@ fun VehicleAllocationScreen(
     var prevReading by remember { mutableStateOf("100.0") } // Assume previous reading is 100
     var prevIssueDate by remember { mutableStateOf("2025-07-19") }
 
-    val meterStatusOptions = listOf("METER WORKING", "METER NOT WORKING")
-    var meterStatus by remember { mutableStateOf(meterStatusOptions[0]) }
+
+    // var meterStatus by remember { mutableStateOf(meterStatusList[0].meterStatus) }
 
     var currentReading by remember { mutableStateOf("") }
     var currentReadingError by remember { mutableStateOf("") }
@@ -59,6 +67,19 @@ fun VehicleAllocationScreen(
     var remarks by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
     var searchText by remember { mutableStateOf("") }
+
+    var selectedMeterStatus by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.fetchMeterStatus()
+    }
+
+    LaunchedEffect(meterStatusList) {
+        if (meterStatusList.isNotEmpty() && selectedMeterStatus.isEmpty()) {
+            selectedMeterStatus = meterStatusList[0].meterStatus
+        }
+    }
+
 
     Column(
         modifier = Modifier
@@ -139,60 +160,16 @@ fun VehicleAllocationScreen(
             }
         }
 
-        /*ExposedDropdownMenuBox(
-            expanded = expanded,
-            onExpandedChange = { expanded = !expanded },
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            TextField(
-                value = searchText,
-                onValueChange = {
-                    searchText = it
-                    expanded = true
-                },
-                label = { Text("Select Vehicle") },
-                trailingIcon = {
-                    ExposedDropdownMenuDefaults.TrailingIcon(expanded)
-                },
-                modifier = Modifier
-                    .menuAnchor()
-                    .fillMaxWidth(),
-                colors = ExposedDropdownMenuDefaults.textFieldColors()
-            )
-
-            ExposedDropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                vehicleList.filter {
-                    it.contains(searchText, ignoreCase = true)
-                }.forEach { item ->
-                    DropdownMenuItem(
-                        text = { Text(item) },
-                        onClick = {
-                            selectedVehicle = item
-                            searchText = item
-                            expanded = false
-                        }
-                    )
-                }
-            }
-        }*/
-
         Spacer(modifier = Modifier.height(16.dp))
 
 
-        LabelledField(label = "Standard Cons", value = standardCons, onValueChange = {
-            standardCons = it
-        })
-        LabelledField(label = "Prev Reading", value = prevReading, onValueChange = {
-            prevReading = it
-        })
-        LabelledField(label = "Prev Issue Date", value = prevIssueDate, onValueChange = {
-            prevIssueDate = it
-        })
 
+        ReadOnlyNoFocusFieldVeh(label = "Standard Consumption", value = standardCons)
+        Spacer(modifier = Modifier.height(12.dp))
+        ReadOnlyNoFocusFieldVeh(label = "Previous Reading", value = prevReading)
+        Spacer(modifier = Modifier.height(12.dp))
+        ReadOnlyNoFocusFieldVeh(label = "Previous Issue Date", value = prevIssueDate)
+        Spacer(modifier = Modifier.height(12.dp))
 
         Text(
             "Meter Status",
@@ -203,7 +180,7 @@ fun VehicleAllocationScreen(
 
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
-                value = meterStatus,
+                value = selectedMeterStatus,
                 onValueChange = {},
                 readOnly = true,
                 modifier = Modifier.fillMaxWidth(),
@@ -217,16 +194,16 @@ fun VehicleAllocationScreen(
                 shape = RoundedCornerShape(12.dp)
             )
             DropdownMenu(expanded = statusExpanded, onDismissRequest = { statusExpanded = false }) {
-                meterStatusOptions.forEach {
+                meterStatusList.forEach {
                     DropdownMenuItem(onClick = {
-                        meterStatus = it
+                        selectedMeterStatus = it.meterStatus
                         statusExpanded = false
-                        if (it == "METER NOT WORKING") {
+                        if (it.meterStatus.contains("METER NOT WORKING", ignoreCase = true)) {
                             currentReading = "0.0"
                         } else {
                             currentReading = ""
                         }
-                    }, text = { Text(it) })
+                    }, text = { Text(it.meterStatus) })
                 }
             }
         }
@@ -242,7 +219,7 @@ fun VehicleAllocationScreen(
             value = currentReading,
             onValueChange = {
                 currentReading = it
-                if (meterStatus == "METER WORKING") {
+                if (selectedMeterStatus.contains("METER WORKING", ignoreCase = true)) {
                     val cr = it.toDoubleOrNull()
                     currentReadingError = if (cr == null || cr <= prevReadingDouble) {
                         "Must be greater than previous reading"
@@ -259,15 +236,17 @@ fun VehicleAllocationScreen(
             },
             isError = currentReadingError.isNotEmpty(),
             errorText = currentReadingError,
-            enabled = meterStatus == "METER WORKING"
+            enabled = selectedMeterStatus.contains("METER WORKING", ignoreCase = true)
         )
 
-        LabelledField(
+        ReadOnlyNoFocusFieldVeh(label = "Standard Quantity", value = standardQty)
+        Spacer(modifier = Modifier.height(12.dp))
+        /*LabelledField(
             label = "Standard Quantity",
             value = standardQty,
             onValueChange = {},
             enabled = false
-        )
+        )*/
 
         LabelledField(label = "Issue Quantity", value = issueQty, onValueChange = {
             issueQty = it
@@ -292,16 +271,43 @@ fun VehicleAllocationScreen(
         }
 
         Spacer(modifier = Modifier.height(8.dp))
-        Button(modifier = Modifier
-            .fillMaxWidth()
-            .height(52.dp), onClick = {
-            navController.navigate(Route.VEHICLE_IMAGE_CAPTURE) {
-                popUpTo(Route.MODULE_LIST) { inclusive = true }
-            }
-        }) {
+        Button(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp), onClick = {
+                navController.navigate(Route.VEHICLE_IMAGE_CAPTURE) {
+                    popUpTo(Route.MODULE_LIST) { inclusive = true }
+                }
+            }) {
             Text("NEXT")
         }
+        LoaderDialog(isShowing = isLoading)
         Spacer(modifier = Modifier.height(25.dp))
+
+    }
+}
+
+
+@Composable
+fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
+    Column {
+        Text(text = label
+            , fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Spacer(Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(56.dp)
+                .border(
+                    width = 1.dp,
+                    color = Color.Gray,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(horizontal = 12.dp),
+            contentAlignment = Alignment.CenterStart
+        ) {
+            Text(text = value, color = Color.Black)
+        }
     }
 }
 

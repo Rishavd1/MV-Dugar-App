@@ -30,34 +30,28 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Engineering
 import androidx.compose.material.icons.filled.Inventory
 import androidx.compose.material.icons.filled.Settings
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ModuleListScreen(
-    navController: NavController,
-    userName: String = "Somnath Das",
-    userId: String = "somnathd"
+    navController: NavController,sharedViewModel: SharedViewModel = viewModel()
 ) {
     val moduleList = listOf(
         "MATERIAL" to Icons.Default.Inventory,       // Represents materials/items
@@ -71,6 +65,7 @@ fun ModuleListScreen(
 
     Box(
         modifier = Modifier
+            .padding(24.dp)
             .fillMaxSize()
             .background(Color.White),
         contentAlignment = Alignment.TopCenter
@@ -83,7 +78,7 @@ fun ModuleListScreen(
             // User name at the top, centered
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = userName,
+                text = "SOMNATH DAS",
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = Color.Black,
@@ -99,7 +94,7 @@ fun ModuleListScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Grid menu: 2 items per row, square cards
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
@@ -121,7 +116,7 @@ fun ModuleListScreen(
                             .clickable {
                                 selectedModule = module.first
                                 if (module.first == "MATERIAL") {
-                                    navController.navigate(Route.FUEL_ISSUE)
+                                    navController.navigate(Route.FUEL_ISSUE_VIEW)
                                 }
                             }
                             .padding(8.dp),

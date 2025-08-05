@@ -40,24 +40,31 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberAsyncImagePainter
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import java.io.File
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.mvdugargroup.PermissionDeniedDialog
-import com.example.mvdugargroup.PermissionHandler
 import android.provider.Settings
+import android.widget.Toast
+import androidx.compose.foundation.layout.Row
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
+import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import coil.request.ImageRequest
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import com.example.mvdugargroup.Route
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 
 @Composable
-fun VehicleImageCaptureScreen(navController: NavController) {
+fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
     val context = LocalContext.current
 
     val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -152,17 +159,41 @@ fun VehicleImageCaptureScreen(navController: NavController) {
         verticalArrangement = Arrangement.spacedBy(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(
-            "Capture Vehicle Meter Image",
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            modifier = Modifier.padding(top = 30.dp)
-        )
+        Spacer(modifier = Modifier.height(24.dp))
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 16.dp, bottom = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            IconButton(
+                onClick = { navController.navigate(Route.VEHICLE_ALLOCATION) }
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ArrowBack,
+                    contentDescription = "Back"
+                )
+            }
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Capture Vehicle Meter Image",
+                fontWeight = FontWeight.Bold,
+                fontSize = 20.sp,
+                modifier = Modifier
+                    .weight(1f)
+            )
+        }
+            /*Text(
+                "Capture Vehicle Meter Image",
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Bold,
+                modifier = Modifier.padding(top = 30.dp)
+            )*/
 
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(500.dp)
+                .height(300.dp)
                 .border(1.dp, Color.Gray),
             contentAlignment = Alignment.Center
         ) {
@@ -177,7 +208,7 @@ fun VehicleImageCaptureScreen(navController: NavController) {
                 Image(
                     painter = painter,
                     contentDescription = "Vehicle Image",
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.FillHeight,
                     modifier = Modifier.fillMaxSize()
                 )
             } ?: run {
@@ -186,27 +217,52 @@ fun VehicleImageCaptureScreen(navController: NavController) {
         }
 
 
-        Button(onClick = {
-            val uri = createImageUri(context)
-            cameraImageUri.value = uri
-            launcherCamera.launch(uri)
-        }) {
-            Icon(Icons.Default.CameraAlt, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Capture Image")
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            Button(
+                onClick = {
+                    val uri = createImageUri(context)
+                    cameraImageUri.value = uri
+                    launcherCamera.launch(uri)
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
+
+            ) {
+                Icon(Icons.Default.CameraAlt, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Capture Image")
+            }
+
+            Button(
+                onClick = { launcherGallery.launch("image/*") },
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.Image, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Choose from Gallery")
+            }
+
+            Button(
+                onClick = {
+                    Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                    navController.navigate(Route.FUEL_ISSUE_VIEW) {
+                        popUpTo(Route.VEHICLE_ALLOCATION) { inclusive = true }
+                    }
+                },
+                modifier = Modifier.fillMaxWidth().height(52.dp)
+            ) {
+                Icon(Icons.Default.Save, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text("Save")
+            }
         }
 
-        Button(onClick = { launcherGallery.launch("image/*") }) {
-            Icon(Icons.Default.Image, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Choose from Gallery")
-        }
-
-        Button(onClick = {  }) {
-            Icon(Icons.Default.Save, contentDescription = null)
-            Spacer(Modifier.width(8.dp))
-            Text("Save")
-        }
     }
 }
 

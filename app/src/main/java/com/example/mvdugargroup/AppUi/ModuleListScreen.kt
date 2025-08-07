@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -41,16 +42,26 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModuleListScreen(
+/*fun ModuleListScreen(
     navController: NavController,sharedViewModel: SharedViewModel = viewModel()
 ) {
     val moduleList = listOf(
@@ -157,7 +168,201 @@ fun ModuleListScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}*/
+
+
+fun ModuleListScreen(
+    navController: NavController,
+    sharedViewModel: SharedViewModel = viewModel()
+) {
+    val allModules = listOf(
+        "MATERIAL" to Icons.Default.Inventory,
+        "CONSTRUCTION" to Icons.Default.Engineering,
+        "PAYROLL" to Icons.Default.AttachMoney,
+        "FINANCIALS" to Icons.Default.AccountBalance,
+        "SETUP" to Icons.Default.Settings
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+    var favoriteModules by remember { mutableStateOf<List<String>>(emptyList()) }
+    var selectedModule by remember { mutableStateOf<String?>(null) }
+
+    Box(
+        modifier = Modifier
+            .padding(24.dp)
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
+
+            Text(
+                text = "SOMNATH DAS",
+                fontWeight = FontWeight.Bold,
+                fontSize = 24.sp,
+                color = Color.Black
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "MENU SECTION",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Spinner-style dropdown
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
+                Column {
+                    Text(
+                        text = "Select Module",
+                        modifier = Modifier.padding(bottom = 8.dp),
+                        fontWeight = FontWeight.Medium
+                    )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                            .clickable { expanded = true }
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = selectedModule ?: "Select Module",
+                            color = if (selectedModule != null) Color.Black else Color.Gray
+                        )
+                    }
+
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(Color.White)
+                    ) {
+                        allModules.forEach { module ->
+                            val moduleName = module.first
+                            DropdownMenuItem(
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Text(moduleName)
+                                        IconButton(
+                                            onClick = {
+                                                favoriteModules = if (favoriteModules.contains(moduleName)) {
+                                                    favoriteModules - moduleName
+                                                } else {
+                                                    favoriteModules + moduleName
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                imageVector = if (favoriteModules.contains(moduleName))
+                                                    Icons.Default.Favorite
+                                                else
+                                                    Icons.Default.FavoriteBorder,
+                                                contentDescription = null,
+                                                tint = if (favoriteModules.contains(moduleName)) Color.Red else Color.Gray
+                                            )
+                                        }
+                                    }
+                                },
+                                onClick = {
+                                    selectedModule = moduleName
+                                    expanded = false
+                                }
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // Grid of favorited modules
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(allModules.filter { it.first in favoriteModules }) { module ->
+                    Box(
+                        modifier = Modifier
+                            .height(120.dp)
+                            .border(1.dp, Color.Black, shape = RoundedCornerShape(12.dp))
+                            .background(
+                                if (selectedModule == module.first) Color.LightGray else Color.White,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                selectedModule = module.first
+                                if (module.first == "MATERIAL") {
+                                    navController.navigate(Route.FUEL_ISSUE_VIEW)
+                                }
+                            }
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                imageVector = module.second,
+                                contentDescription = "${module.first} icon",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 12.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Text(
+                                text = module.first,
+                                style = TextStyle(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 16.sp,
+                                    color = Color.Black,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
 }
+
+
+
+
+
+
 
 
 

@@ -98,7 +98,9 @@ fun VehicleAllocationScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController.popBackStack() }
+                onClick = { navController.navigate(Route.VEHICLE_IMAGE_CAPTURE){
+                    popUpTo(Route.FUEL_ISSUE) { inclusive = true }
+                } }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -299,7 +301,7 @@ fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
                 .fillMaxWidth()
                 .height(56.dp)
                 .border(
-                    width = 1.dp,
+                    width = 0.dp,
                     color = Color.Gray,
                     shape = RoundedCornerShape(12.dp)
                 )

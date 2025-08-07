@@ -59,6 +59,7 @@ private val _errorMessage = MutableStateFlow<String?>(null)
 val errorMessage: StateFlow<String?> = _errorMessage
 
 
+
 init {
     viewModelScope.launch {
         prefs.rememberMeFlow.collect { remembered ->
@@ -92,7 +93,8 @@ fun reset() {
     passwordVisible = false
 }
 
-fun onLoginSuccess() {
+
+    fun onLoginSuccess() {
     viewModelScope.launch {
         _isLoading.value = true
         _errorMessage.value = null
@@ -103,6 +105,7 @@ fun onLoginSuccess() {
                 val userId = response.body()?.result?.id
                 Log.e("userId", "$userId")
                 prefs.saveRememberMe(rememberMe)
+                prefs.saveUserId(userId.toString())
                 _navigateToHome.value = true
             } else {
                 _errorMessage.value = "Login failed: ${response.code()} ${response.message()}"

@@ -366,7 +366,7 @@ fun ReadOnlyNoFocusField(label: String, value: String) {
                 .fillMaxWidth()
                 .height(56.dp)
                 .border(
-                    width = 1.dp,
+                    width = 0.dp,
                     color = Color.Gray,
                     shape = RoundedCornerShape(12.dp)
                 )

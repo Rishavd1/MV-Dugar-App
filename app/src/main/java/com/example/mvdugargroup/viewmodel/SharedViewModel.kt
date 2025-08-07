@@ -12,6 +12,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.mvdugargroup.Api.BusinessUnit
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Api.FuelType
+import com.example.mvdugargroup.Api.LoginDetailsResponse
 import com.example.mvdugargroup.Api.MeterStatus
 import com.example.mvdugargroup.Api.StockQuantity
 import com.example.mvdugargroup.Api.Warehouse
@@ -20,7 +21,10 @@ import com.example.mvdugargroup.network.RetrofitInstance
 import com.example.mvdugargroup.sharedPreference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Dispatcher
@@ -30,6 +34,24 @@ import java.io.File
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = PreferenceManager(application)
+
+    val selectedModule: StateFlow<String?> = prefs.selectedModuleFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+    val favoriteModules: StateFlow<Set<String>> = prefs.favoriteModulesFlow
+        .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
+
+    fun updateSelectedModule(module: String) {
+        viewModelScope.launch {
+            prefs.saveSelectedModule(module)
+        }
+    }
+
+    fun updateFavoriteModules(modules: Set<String>) {
+        viewModelScope.launch {
+            prefs.saveFavoriteModules(modules)
+        }
+    }
     private val repository: FuelIssueRepository
         get() {
             return FuelIssueRepository(
@@ -37,281 +59,321 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             )
         }
 
-var username by mutableStateOf("")
-    private set
+    var username by mutableStateOf("")
+        private set
 
-var password by mutableStateOf("")
-    private set
+    var password by mutableStateOf("")
+        private set
 
-var rememberMe by mutableStateOf(false)
-    private set
+    var rememberMe by mutableStateOf(false)
+        private set
 
-var passwordVisible by mutableStateOf(false)
-    private set
-private val _navigateToHome = MutableStateFlow(false)
-val navigateToHome: StateFlow<Boolean> = _navigateToHome
-
-
-private val _isLoading = MutableStateFlow(false)
-val isLoading: StateFlow<Boolean> = _isLoading
-
-private val _errorMessage = MutableStateFlow<String?>(null)
-val errorMessage: StateFlow<String?> = _errorMessage
+    var passwordVisible by mutableStateOf(false)
+        private set
+    private val _navigateToHome = MutableStateFlow(false)
+    val navigateToHome: StateFlow<Boolean> = _navigateToHome
 
 
+    private val _isLoading = MutableStateFlow(false)
+    val isLoading: StateFlow<Boolean> = _isLoading
 
-init {
-    viewModelScope.launch {
-        prefs.rememberMeFlow.collect { remembered ->
-            if (remembered) {
-                _navigateToHome.value = true
+    private val _errorMessage = MutableStateFlow<String?>(null)
+    val errorMessage: StateFlow<String?> = _errorMessage
+
+    private var _userDetails = MutableStateFlow<LoginDetailsResponse?>(null)
+    val userDetails: StateFlow<LoginDetailsResponse?> = _userDetails.asStateFlow()
+
+
+
+    init {
+        viewModelScope.launch {
+            prefs.rememberMeFlow.collect { remembered ->
+                if (remembered) {
+                    _navigateToHome.value = true
+                }
             }
         }
     }
-}
 
-fun onUsernameChange(newUsername: String) {
-    username = newUsername
-}
+    fun onUsernameChange(newUsername: String) {
+        username = newUsername
+    }
 
-fun onPasswordChange(newPassword: String) {
-    password = newPassword
-}
+    fun onPasswordChange(newPassword: String) {
+        password = newPassword
+    }
 
-fun togglePasswordVisibility() {
-    passwordVisible = !passwordVisible
-}
+    fun togglePasswordVisibility() {
+        passwordVisible = !passwordVisible
+    }
 
-fun onRememberMeChange(checked: Boolean) {
-    rememberMe = checked
-}
+    fun onRememberMeChange(checked: Boolean) {
+        rememberMe = checked
+    }
 
-fun reset() {
-    username = ""
-    password = ""
-    rememberMe = false
-    passwordVisible = false
-}
+    fun reset() {
+        username = ""
+        password = ""
+        rememberMe = false
+        passwordVisible = false
+    }
 
+    fun loadUserDetails() {
+        viewModelScope.launch {
+            prefs.getUserDetails().collect {
+                _userDetails.value = it
+            }
+        }
+    }
 
     fun onLoginSuccess() {
-    viewModelScope.launch {
-        _isLoading.value = true
-        _errorMessage.value = null
-        try {
-            val response =
-                withContext(Dispatchers.IO) { RetrofitInstance.api.login(username, password) }
-            if (response.isSuccessful && response.body()?.statusCode == 200) {
-                val userId = response.body()?.result?.id
-                Log.e("userId", "$userId")
-                prefs.saveRememberMe(rememberMe)
-                prefs.saveUserId(userId.toString())
-                _navigateToHome.value = true
-            } else {
-                _errorMessage.value = "Login failed: ${response.code()} ${response.message()}"
-                Log.e("LoginError", "Code: ${response.code()}, Message: ${response.message()}")
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response =
+                    withContext(Dispatchers.IO) { RetrofitInstance.api.login(username, password) }
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val userId = response.body()?.result?.id
+                    Log.e("userId", "$userId")
+                    prefs.saveRememberMe(rememberMe)
+                    prefs.saveUser(response.body()!!.result)
+                    _navigateToHome.value = true
+                } else {
+                    _errorMessage.value = "Login failed: ${response.code()} ${response.message()}"
+                    Log.e("LoginError", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                _errorMessage.value = "Network error: ${e.localizedMessage ?: "Unknown error"}"
+                Log.e("LoginException", e.message ?: "Unknown exception")
+            } finally {
+                _isLoading.value = false
             }
-        } catch (e: Exception) {
-            _errorMessage.value = "Network error: ${e.localizedMessage ?: "Unknown error"}"
-            Log.e("LoginException", e.message ?: "Unknown exception")
-        } finally {
-            _isLoading.value = false
         }
     }
-}
 
-private val _fuelTypes = MutableLiveData<List<FuelType>>()
-val fuelTypes: LiveData<List<FuelType>> = _fuelTypes
-fun fetchFuelTypes() {
-    viewModelScope.launch {
-        _isLoading.value = true
-        _errorMessage.value = null
-        try {
-            val response = withContext(Dispatchers.IO) { RetrofitInstance.api.fetchFuelTypes() }
-            if (response.isSuccessful && response.body()?.statusCode == 200) {
-                val fuelTypes = response.body()?.result ?: emptyList()
-                _fuelTypes.value = fuelTypes
-                Log.d("fuelTypes", fuelTypes.toString())
-            } else {
+    private val _fuelTypes = MutableLiveData<List<FuelType>>()
+    val fuelTypes: LiveData<List<FuelType>> = _fuelTypes
+    fun fetchFuelTypes() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response = withContext(Dispatchers.IO) { RetrofitInstance.api.fetchFuelTypes() }
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val fuelTypes = response.body()?.result ?: emptyList()
+                    _fuelTypes.value = fuelTypes
+                    Log.d("fuelTypes", fuelTypes.toString())
+                } else {
+                    _fuelTypes.value = emptyList()
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e(
+                        "FuelTypeError",
+                        "Code: ${response.code()}, Message: ${response.message()}"
+                    )
+                }
+            } catch (e: Exception) {
                 _fuelTypes.value = emptyList()
-                _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                Log.e(
-                    "FuelTypeError",
-                    "Code: ${response.code()}, Message: ${response.message()}"
-                )
+                _errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("FuelTypeException", e.toString())
+            } finally {
+                fetchBusinessUnit()
+                //_isLoading.value = false
             }
-        } catch (e: Exception) {
-            _fuelTypes.value = emptyList()
-            _errorMessage.value = "Exception: ${e.localizedMessage}"
-            Log.e("FuelTypeException", e.toString())
-        } finally {
-            fetchBusinessUnit()
-            //_isLoading.value = false
         }
     }
-}
 
-private val _businessType = MutableLiveData<List<BusinessUnit>>()
-val businessType: LiveData<List<BusinessUnit>> = _businessType
-suspend fun fetchBusinessUnit() {
+    private val _businessType = MutableLiveData<List<BusinessUnit>>()
+    val businessType: LiveData<List<BusinessUnit>> = _businessType
+    suspend fun fetchBusinessUnit() {
 
-    _errorMessage.value = null
-    try {
-        val response = withContext(Dispatchers.IO) { RetrofitInstance.api.fetchBusinessUnit() }
-        if (response.isSuccessful && response.body()?.statusCode == 200) {
-            val businessUnits = response.body()?.result ?: emptyList()
-            Log.d("businessUnits", businessUnits.toString())
-            _businessType.value = businessUnits
-        } else {
+        _errorMessage.value = null
+        try {
+            val response = withContext(Dispatchers.IO) { RetrofitInstance.api.fetchBusinessUnit() }
+            if (response.isSuccessful && response.body()?.statusCode == 200) {
+                val businessUnits = response.body()?.result ?: emptyList()
+                Log.d("businessUnits", businessUnits.toString())
+                _businessType.value = businessUnits
+            } else {
+                _businessType.value = emptyList()
+                _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                Log.e("businessUnits", "Code: ${response.code()}, Message: ${response.message()}")
+            }
+        } catch (e: Exception) {
             _businessType.value = emptyList()
-            _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-            Log.e("businessUnits", "Code: ${response.code()}, Message: ${response.message()}")
+            _errorMessage.value = "Exception: ${e.localizedMessage}"
+            Log.e("businessUnits", "Exception $e")
+        } finally {
+            _isLoading.value = false
         }
-    } catch (e: Exception) {
-        _businessType.value = emptyList()
-        _errorMessage.value = "Exception: ${e.localizedMessage}"
-        Log.e("businessUnits", "Exception $e")
-    } finally {
-        _isLoading.value = false
     }
-}
 
-private val _warehouse = MutableLiveData<List<Warehouse>>()
-val warehouse: LiveData<List<Warehouse>> = _warehouse
+    private val _warehouse = MutableLiveData<List<Warehouse>>()
+    val warehouse: LiveData<List<Warehouse>> = _warehouse
 
-fun fetchWarehouse(
-    businessUnitId: Int,
-    fuelTypeId: Int
-) {
-    viewModelScope.launch {
-        _isLoading.value = true
-        _errorMessage.value = null
-        try {
-            val response = withContext(Dispatchers.IO) {
-                RetrofitInstance.api.fetchWarehouse(
-                    businessUnitId,
-                    fuelTypeId
-                )
-            }
-            if (response.isSuccessful && response.body()?.statusCode == 200) {
-                val warehouses = response.body()?.result ?: emptyList()
-                Log.d("Warehouse", warehouses.toString())
-                _warehouse.value = warehouses
-            } else {
+    fun fetchWarehouse(
+        businessUnitId: Int,
+        fuelTypeId: Int
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.fetchWarehouse(
+                        businessUnitId,
+                        fuelTypeId
+                    )
+                }
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val warehouses = response.body()?.result ?: emptyList()
+                    Log.d("Warehouse", warehouses.toString())
+                    _warehouse.value = warehouses
+                } else {
+                    _warehouse.value = emptyList()
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("Warehouse", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+            } catch (e: Exception) {
                 _warehouse.value = emptyList()
-                _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                Log.e("Warehouse", "Code: ${response.code()}, Message: ${response.message()}")
+                _errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("Warehouse", "Exception $e")
+            } finally {
+                _isLoading.value = false
             }
-        } catch (e: Exception) {
-            _warehouse.value = emptyList()
-            _errorMessage.value = "Exception: ${e.localizedMessage}"
-            Log.e("Warehouse", "Exception $e")
-        } finally {
-            _isLoading.value = false
         }
+
     }
 
-}
+    private val _stockQuantity = MutableLiveData<StockQuantity?>()
+    val stockQuantity: LiveData<StockQuantity?> = _stockQuantity
 
-private val _stockQuantity = MutableLiveData<StockQuantity?>()
-val stockQuantity: LiveData<StockQuantity?> = _stockQuantity
-
-fun fetchStockQuantity(
-    businessUnitId: Int,
-    fuelTypeId: Int,
-    warehouseId: Int
-) {
-    viewModelScope.launch {
-        _isLoading.value = true
-        _errorMessage.value = null
-        try {
-            val response = withContext(Dispatchers.IO) {
-                RetrofitInstance.api.fetchStockQuantity(
-                    businessUnitId,
-                    fuelTypeId,
-                    warehouseId
-                )
-            }
-            if (response.isSuccessful && response.body()?.statusCode == 200) {
-                val stock = response.body()?.result
-                Log.d("Stock", stock.toString())
-                _stockQuantity.value = stock
-            } else {
+    fun fetchStockQuantity(
+        businessUnitId: Int,
+        fuelTypeId: Int,
+        warehouseId: Int
+    ) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.fetchStockQuantity(
+                        businessUnitId,
+                        fuelTypeId,
+                        warehouseId
+                    )
+                }
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val stock = response.body()?.result
+                    Log.d("Stock", stock.toString())
+                    _stockQuantity.value = stock
+                } else {
+                    _stockQuantity.value = null
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("Stock", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+            } catch (e: Exception) {
                 _stockQuantity.value = null
-                _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                Log.e("Stock", "Code: ${response.code()}, Message: ${response.message()}")
+                _errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("Stock", "Exception $e")
+            } finally {
+                _isLoading.value = false
             }
-        } catch (e: Exception) {
-            _stockQuantity.value = null
-            _errorMessage.value = "Exception: ${e.localizedMessage}"
-            Log.e("Stock", "Exception $e")
-        } finally {
-            _isLoading.value = false
         }
     }
-}
 
 
-private val _meterStatus = MutableLiveData<List<MeterStatus>>()
-val meterStatus: LiveData<List<MeterStatus>> = _meterStatus
+    private val _meterStatus = MutableLiveData<List<MeterStatus>>()
+    val meterStatus: LiveData<List<MeterStatus>> = _meterStatus
 
 
-fun fetchMeterStatus() {
-    viewModelScope.launch {
-        _isLoading.value = true
-        _errorMessage.value = null
-        try {
-            val response = withContext(Dispatchers.IO) { RetrofitInstance.api.fetchMeterStatus() }
-            if (response.isSuccessful && response.body()?.statusCode == 200) {
-                val meterStatus = response.body()?.result
-                Log.d("Meter", meterStatus.toString())
-                _meterStatus.value = meterStatus ?: emptyList()
-            } else {
+    fun fetchMeterStatus() {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response =
+                    withContext(Dispatchers.IO) { RetrofitInstance.api.fetchMeterStatus() }
+                if (response.isSuccessful && response.body()?.statusCode == 200) {
+                    val meterStatus = response.body()?.result
+                    Log.d("Meter", meterStatus.toString())
+                    _meterStatus.value = meterStatus ?: emptyList()
+                } else {
+                    _meterStatus.value = emptyList()
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("Meter", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+            } catch (e: Exception) {
                 _meterStatus.value = emptyList()
-                _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                Log.e("Meter", "Code: ${response.code()}, Message: ${response.message()}")
+                _errorMessage.value = "Exception: ${e.localizedMessage}"
+                Log.e("Meter", "Exception $e")
+            } finally {
+                _isLoading.value = false
             }
-        } catch (e: Exception) {
-            _meterStatus.value = emptyList()
-            _errorMessage.value = "Exception: ${e.localizedMessage}"
-            Log.e("Meter", "Exception $e")
-        } finally {
-            _isLoading.value = false
         }
     }
-}
+
+    // Fuel Type
+    val selectedFuelTypeId = mutableStateOf<Int?>(null)
+    val selectedFuelTypeName = mutableStateOf<String?>(null)
+
+    // Business Unit
+    val selectedBusinessUnitId = mutableStateOf<Int?>(null)
+    val selectedBusinessUnitName = mutableStateOf<String?>(null)
+
+    // Warehouse
+    val selectedWarehouseId = mutableStateOf<Int?>(null)
+    val selectedWarehouseName = mutableStateOf<String?>(null)
+
+    // Stock
+    val stock = mutableStateOf<Double?>(null)
+
+    // Vehicle Info
+    val vehicleName = mutableStateOf<String?>(null)
+    val standardConsumption = mutableStateOf<Double?>(null)
+    val previousReading = mutableStateOf<Double?>(null)
+    val previousIssueDate = mutableStateOf<String?>(null)
+    val meterStatusString = mutableStateOf<String?>(null)
+    val currentReading = mutableStateOf<Double?>(null)
+
+    // Entry Info
+    val entryBy = mutableStateOf<String>("Admin")  // Default
+    val issueNo = mutableStateOf<String>("")       // Generate if needed
+    val issueDate = mutableStateOf<String>("")     // Set via DatePicker
 
 
-private val _formState = MutableStateFlow<FuelIssueRequest?>(null)
-val formState: StateFlow<FuelIssueRequest?> = _formState
+    private val _formState = MutableStateFlow<FuelIssueRequest?>(null)
+    val formState: StateFlow<FuelIssueRequest?> = _formState
 
-private val _imageFile = MutableStateFlow<File?>(null)
-val imageFile: StateFlow<File?> = _imageFile
+    private val _imageFile = MutableStateFlow<File?>(null)
+    val imageFile: StateFlow<File?> = _imageFile
 
-fun updateFormData(data: FuelIssueRequest) {
-    _formState.value = data
-}
+    fun updateFormData(data: FuelIssueRequest) {
+        _formState.value = data
+    }
 
-fun updateImageFile(file: File) {
-    _imageFile.value = file
-}
+    fun updateImageFile(file: File) {
+        _imageFile.value = file
+    }
 
-fun submitForm() {
-    viewModelScope.launch {
-        try {
-            val formData = _formState.value ?: return@launch
-            val image = _imageFile.value
+    fun submitForm() {
+        viewModelScope.launch {
+            try {
+                val formData = _formState.value ?: return@launch
+                val image = _imageFile.value
 
-            val response = repository.sendFuelIssueRequest(formData, image)
-            if (response.isSuccessful) {
+                val response = repository.sendFuelIssueRequest(formData, image)
+                if (response.isSuccessful) {
 
-            } else {
+                } else {
 
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
             }
-        } catch (e: Exception) {
-            e.printStackTrace()
         }
     }
-}
+
 
 }

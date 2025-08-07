@@ -43,16 +43,18 @@ fun VehicleAllocationScreen(
     val meterStatusList by sharedViewModel.meterStatus.observeAsState(emptyList())
 
     val vehicleList = listOf(
-        "LMVMBC001 - BOLERO CAMPER BSIII - BA 18 CHA 5928",
-        "LMVMBC002 - BOLERO CAMPER BSIV - BA 18 CHA 5929",
-        "LMVMBC003 - BOLERO CAMPER BSV - BA 20 CHA 9672"
+        "LMVMBCA001",
+        "LMVMBCA002",
+        "LMVMBCA003",
+        "LMVMBCA004",
+        "LMVMBCA005",
     )
 
     var selectedVehicle by remember { mutableStateOf("") }
     var showDropdown by remember { mutableStateOf(false) }
 
     var standardCons by remember { mutableStateOf("0.0") }
-    var prevReading by remember { mutableStateOf("100.0") } // Assume previous reading is 100
+    var prevReading by remember { mutableStateOf("100.0") }
     var prevIssueDate by remember { mutableStateOf("2025-07-19") }
 
 
@@ -75,6 +77,8 @@ fun VehicleAllocationScreen(
     }
 
     LaunchedEffect(meterStatusList) {
+        selectedVehicle = vehicleList[0]
+
         if (meterStatusList.isNotEmpty() && selectedMeterStatus.isEmpty()) {
             selectedMeterStatus = meterStatusList[0].meterStatus
         }
@@ -98,7 +102,7 @@ fun VehicleAllocationScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController.navigate(Route.VEHICLE_IMAGE_CAPTURE){
+                onClick = { navController.navigate(Route.FUEL_ISSUE){
                     popUpTo(Route.FUEL_ISSUE) { inclusive = true }
                 } }
             ) {
@@ -122,7 +126,7 @@ fun VehicleAllocationScreen(
 
         Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
-                value = searchText,
+                value = selectedVehicle,
                 onValueChange = {
                     searchText = it
                     vehicleExpanded = true

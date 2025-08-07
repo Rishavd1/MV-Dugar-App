@@ -74,6 +74,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
 
     var issueNo by remember { mutableStateOf("") }
     var selectedFuelType by remember { mutableStateOf("") }
+    var selectedFuelTypeId by remember { mutableStateOf("") }
     var selectedBusinessUnit by remember { mutableStateOf("") }
     var selectedWarehouse by remember { mutableStateOf("") }
 
@@ -154,48 +155,12 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 modifier = Modifier.weight(1f)
             )
         }
-       // Text("Issue No", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
-        /*val interactionSource = remember { MutableInteractionSource() }
-
-        OutlinedTextField(
-            value = "ISSUENO",  //issueNo
-            onValueChange = { *//* no-op since readOnly *//* },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            readOnly = true,
-            enabled = false,
-            interactionSource = interactionSource,
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Gray,
-                unfocusedBorderColor = Color.Gray,
-                focusedLabelColor = Color.Gray,
-                unfocusedLabelColor = Color.Gray,
-                cursorColor = Color.Transparent
-            )
-        )*/
         ReadOnlyNoFocusField("Issue No","issue1") //issueNo
         Spacer(modifier = Modifier.height(12.dp))
-
-        // Issue Date
-//        Text("Issue Date", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         ReadOnlyNoFocusField("Issue Date",issueDate)
-        /*OutlinedTextField(
-            value = issueDate,
-            onValueChange = {},
-            readOnly = true,
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp),
-            trailingIcon = {
-                Icon(
-                    imageVector = Icons.Default.CalendarToday,
-                    contentDescription = "Calendar"
-                )
-            }
-        )*/
+
         Spacer(modifier = Modifier.height(12.dp))
 
         // Fuel Type Dropdown
@@ -208,7 +173,8 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             OutlinedTextField(
                 value = selectedFuelType,
                 onValueChange = {
-                   },
+
+                },
                 readOnly = true,
                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(fuelTypeExpanded) },
                 modifier = Modifier
@@ -226,12 +192,13 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                         onClick = {
                             selectedFuelType = type
                             fuelTypeExpanded = false
-                            val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                            val _selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                            selectedFuelTypeId = _selectedFuelTypeId.toString()
                             val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
-                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $_selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
 
-                            if (selectedFuelTypeId != null && selectedBusinessUnitId != null) {
-                                sharedViewModel.fetchWarehouse(selectedBusinessUnitId, selectedFuelTypeId)
+                            if (_selectedFuelTypeId != null && selectedBusinessUnitId != null) {
+                                sharedViewModel.fetchWarehouse(selectedBusinessUnitId, _selectedFuelTypeId)
                             }
                         }
                     )
@@ -314,8 +281,15 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                             val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
                             val selectedWarehouseId = sharedViewModel.warehouse.value?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId!!
                             Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
-
                             if (selectedFuelTypeId != null && selectedBusinessUnitId != null && selectedWarehouseId != null) {
+                                sharedViewModel.selectedFuelTypeId.value = selectedFuelTypeId
+                                sharedViewModel.selectedBusinessUnitId.value = selectedBusinessUnitId
+                                sharedViewModel.selectedWarehouseId.value = selectedWarehouseId
+                                Log.d("TAG", "FuelIssueScreen: selectedWarehouseId = $selectedWarehouseId")
+                                sharedViewModel.selectedFuelTypeName.value = selectedFuelType
+                                sharedViewModel.selectedBusinessUnitName.value = selectedBusinessUnit
+                                sharedViewModel.selectedWarehouseName.value = selectedWarehouse
+
                                 sharedViewModel.fetchStockQuantity(selectedBusinessUnitId, selectedFuelTypeId,selectedWarehouseId)
                             }
                         }
@@ -326,15 +300,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         Spacer(modifier = Modifier.height(12.dp))
 
         // Stock
-        /*Text("Stock", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
-        Spacer(modifier = Modifier.height(4.dp))
-        OutlinedTextField(
-            value = stock,
-            onValueChange = { stock = it },
-            modifier = Modifier.fillMaxWidth(),
-            singleLine = true,
-            shape = RoundedCornerShape(12.dp)
-        )*/
         ReadOnlyNoFocusField("Stock",stockDisplay)
         Spacer(modifier = Modifier.height(20.dp))
 

@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -53,6 +54,9 @@ import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -183,13 +187,24 @@ fun ModuleListScreen(
         "SETUP" to Icons.Default.Settings
     )
 
+
+
+
+
     var expanded by remember { mutableStateOf(false) }
-    var favoriteModules by remember { mutableStateOf<List<String>>(emptyList()) }
-    var selectedModule by remember { mutableStateOf<String?>(null) }
+
+    val favoriteModules by sharedViewModel.favoriteModules.collectAsState()
+    val selectedModule by sharedViewModel.selectedModule.collectAsState()
+
+    val userDetails by sharedViewModel.userDetails.collectAsState()
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.loadUserDetails()
+    }
 
     Box(
         modifier = Modifier
-            .padding(24.dp)
+            .padding(10.dp,50.dp,10.dp,0.dp)
             .fillMaxSize()
             .background(Color.White),
         contentAlignment = Alignment.TopCenter
@@ -200,13 +215,17 @@ fun ModuleListScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             Spacer(modifier = Modifier.height(32.dp))
+            if (userDetails != null) {
+                Text(
+                    text = userDetails?.name ?: "",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = Color.Black
+                )
+            } else {
+                CircularProgressIndicator()
+            }
 
-            Text(
-                text = "SOMNATH DAS",
-                fontWeight = FontWeight.Bold,
-                fontSize = 24.sp,
-                color = Color.Black
-            )
 
             Spacer(modifier = Modifier.height(8.dp))
 
@@ -223,14 +242,9 @@ fun ModuleListScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+                    .padding(horizontal = 25.dp)
             ) {
                 Column {
-                    Text(
-                        text = "Select Module",
-                        modifier = Modifier.padding(bottom = 8.dp),
-                        fontWeight = FontWeight.Medium
-                    )
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -239,55 +253,61 @@ fun ModuleListScreen(
                             .padding(16.dp)
                     ) {
                         Text(
-                            text = selectedModule ?: "Select Module",
+                            text = "Select Module",
                             color = if (selectedModule != null) Color.Black else Color.Gray
                         )
                     }
-
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(Color.White)
-                    ) {
-                        allModules.forEach { module ->
-                            val moduleName = module.first
-                            DropdownMenuItem(
-                                text = {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        horizontalArrangement = Arrangement.SpaceBetween,
-                                        modifier = Modifier.fillMaxWidth()
-                                    ) {
-                                        Text(moduleName)
-                                        IconButton(
-                                            onClick = {
-                                                favoriteModules = if (favoriteModules.contains(moduleName)) {
-                                                    favoriteModules - moduleName
-                                                } else {
-                                                    favoriteModules + moduleName
-                                                }
-                                            }
+                    Box(
+                        modifier = Modifier.wrapContentWidth(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .background(Color.White)
+                        ) {
+                            allModules.forEach { module ->
+                                val moduleName = module.first
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
                                         ) {
-                                            Icon(
-                                                imageVector = if (favoriteModules.contains(moduleName))
-                                                    Icons.Default.Favorite
-                                                else
-                                                    Icons.Default.FavoriteBorder,
-                                                contentDescription = null,
-                                                tint = if (favoriteModules.contains(moduleName)) Color.Red else Color.Gray
-                                            )
+                                            Text(moduleName)
+                                            IconButton(
+                                                onClick = {
+                                                    val updatedFavorites = if (favoriteModules.contains(moduleName)) {
+                                                        favoriteModules - moduleName
+                                                    } else {
+                                                        favoriteModules + moduleName
+                                                    }
+                                                    sharedViewModel.updateFavoriteModules(updatedFavorites)
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (favoriteModules.contains(moduleName))
+                                                        Icons.Default.Favorite
+                                                    else
+                                                        Icons.Default.FavoriteBorder,
+                                                    contentDescription = null,
+                                                    tint = if (favoriteModules.contains(moduleName)) Color.Red else Color.Gray
+                                                )
+                                            }
                                         }
+                                    },
+                                    onClick = {
+                                        sharedViewModel.updateSelectedModule(moduleName)
+                                        expanded = false
                                     }
-                                },
-                                onClick = {
-                                    selectedModule = moduleName
-                                    expanded = false
-                                }
-                            )
+                                )
+                            }
                         }
                     }
+
                 }
             }
 
@@ -308,14 +328,20 @@ fun ModuleListScreen(
                         modifier = Modifier
                             .height(120.dp)
                             .border(1.dp, Color.Black, shape = RoundedCornerShape(12.dp))
-                            .background(
-                                if (selectedModule == module.first) Color.LightGray else Color.White,
+                            .background( Color.White
+                                /*if (selectedModule == module.first) Color.White else Color.LightGray*/,
                                 shape = RoundedCornerShape(12.dp)
                             )
                             .clickable {
-                                selectedModule = module.first
+                                sharedViewModel.updateSelectedModule(module.first)
                                 if (module.first == "MATERIAL") {
                                     navController.navigate(Route.FUEL_ISSUE_VIEW)
+                                }else{
+                                    Toast.makeText(
+                                        navController.context,
+                                        "No Further Process!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
                                 }
                             }
                             .padding(8.dp),

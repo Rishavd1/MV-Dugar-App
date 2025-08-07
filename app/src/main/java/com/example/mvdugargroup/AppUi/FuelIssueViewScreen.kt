@@ -2,10 +2,13 @@ package com.example.mvdugargroup.AppUi
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -22,9 +25,11 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocalGasStation
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -62,8 +67,12 @@ import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 import java.time.LocalDate
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.window.Dialog
+import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.utils.DeleteConfirmationDialog
 import java.time.format.DateTimeFormatter
@@ -86,8 +95,8 @@ fun FuelIssueViewScreen(
     var startDate by remember { mutableStateOf(LocalDate.now().minusMonths(1)) }
     var endDate by remember { mutableStateOf(LocalDate.now()) }
 
-    var itemToDelete by remember { mutableStateOf<FuelIssueItem?>(null) }
-
+    var itemToDelete by remember { mutableStateOf<FuelIssueRequest?>(null) }
+    var selectedItem by remember { mutableStateOf<FuelIssueRequest?>(null) }
 
     // Dropdown items
     val vehicleList = listOf(
@@ -100,12 +109,12 @@ fun FuelIssueViewScreen(
     val fuelTypes = listOf("DIESEL HIGH SPEED", "PETROL", "CNG")
 
     val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-    val searchResults = remember { mutableStateListOf<FuelIssueItem>() }
+    val searchResults = remember { mutableStateListOf<FuelIssueRequest>() }
 
 
     LaunchedEffect(Unit) {
         searchResults.clear()
-        searchResults.addAll(mockFuelData()) // Load dummy data when screen opens
+        searchResults.addAll(mockFuelIssueList()) // Load dummy data when screen opens
     }
 
     Scaffold(
@@ -174,7 +183,10 @@ fun FuelIssueViewScreen(
                                 .fillMaxWidth(),
                             shape = RoundedCornerShape(16.dp),
                             colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                            elevation = CardDefaults.cardElevation(4.dp)
+                            elevation = CardDefaults.cardElevation(4.dp),
+                            onClick = {
+                                selectedItem = item
+                            }
                         ) {
                             Column(
                                 modifier = Modifier
@@ -209,34 +221,83 @@ fun FuelIssueViewScreen(
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
-                                    if (itemToDelete != null) {
-                                        DeleteConfirmationDialog(
-                                            itemName = "Issue No: ${itemToDelete!!.issueNo}",
-                                            onConfirm = {
-                                                searchResults.remove(itemToDelete)
-                                                itemToDelete = null  // Close dialog
-                                            },
-                                            onDismiss = {
-                                                itemToDelete =
-                                                    null  // Close dialog without deleting
-                                            }
-                                        )
-                                    }
                                 }
 
                                 Spacer(Modifier.height(8.dp))
 
-                                InfoRow(label = "Fuel Type", value = item.fuelType)
+                                InfoRow(label = "Fuel Type", value = item.fuelTypeName)
                                 InfoRow(
                                     label = "Issue Date",
                                     value = item.issueDate.format(dateFormatter)
                                 )
-                                InfoRow(label = "Business Unit", value = item.businessUnit)
-                                InfoRow(label = "Warehouse", value = item.warehouse)
-                                InfoRow(label = "Vehicle", value = item.vehicleDetail)
+                                InfoRow(label = "Business Unit", value = item.businessUnitName)
+                                InfoRow(label = "Warehouse", value = item.warehouseName)
+                                InfoRow(label = "Vehicle", value = item.vehicleName)
                             }
                         }
                     }
+                }
+                if (itemToDelete != null) {
+                    DeleteConfirmationDialog(
+                        itemName = "Issue No: ${itemToDelete!!.issueNo}",
+                        onConfirm = {
+                            searchResults.remove(itemToDelete)
+                            itemToDelete = null  // Close dialog
+                        },
+                        onDismiss = {
+                            itemToDelete =
+                                null  // Close dialog without deleting
+                        }
+                    )
+                }
+                /*if (selectedItem != null)   {
+                    Dialog(
+                        onDismissRequest = { selectedItem = null }
+                    ) {
+                        Surface(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.85f), // Makes it large and scrollable
+                            shape = RoundedCornerShape(16.dp),
+                            color = Color.White
+                        ) {
+
+
+                            Column(
+                                modifier = Modifier
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(16.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Text(
+                                        text = "Fuel Issue Details",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp
+                                    )
+                                    IconButton(onClick = { selectedItem = null }) {
+                                        Icon(Icons.Default.Close, contentDescription = "Close")
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                FuelIssueRequestReadOnlyScreen(fuelIssueRequest = selectedItem!!)
+                            }
+
+
+                        }
+                    }
+                }*/
+                // Show dialog if an item is selected
+                if (selectedItem != null) {
+                    FuelIssueDetailDialog(
+                        item = selectedItem!!,
+                        onDismiss = { selectedItem = null }
+                    )
                 }
             } else {
                 Text(
@@ -353,7 +414,7 @@ fun FuelIssueViewScreen(
                             onClick = {
                                 showBottomSheet = false
                                 searchResults.clear()
-                                searchResults.addAll(mockFuelData()) // Apply actual filter logic
+                                searchResults.addAll(mockFuelIssueList()) // Apply actual filter logic
                             },
                             modifier = Modifier.weight(1f)
                         ) {
@@ -446,94 +507,163 @@ fun InfoRow(label: String, value: String) {
 }
 
 
-fun mockFuelData(): List<FuelIssueItem> = listOf(
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00010/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "MAHINDRA BOLERO CAMPER"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00011/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00012/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00013/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00014/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00015/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00016/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00017/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00018/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00019/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
-    ),
-    FuelIssueItem(
-        fuelType = "DIESEL HIGH SPEED",
-        issueNo = "LKFISS/00020/24-25",
-        issueDate = LocalDate.of(2025, 6, 13),
-        businessUnit = "LAPCHE KHOLA - SUMO",
-        warehouse = "Main Store Lapche Khola",
-        vehicleDetail = "TATA TIPPER 1613"
+@Composable
+fun FuelIssueDetailDialog(item: FuelIssueRequest, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Close")
+            }
+        },
+        title = { Text("Fuel Issue Details") },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState())
+            ) {
+                InfoRow("Issue No", item.issueNo)
+                InfoRow("Issue Date", item.issueDate)
+                InfoRow("Fuel Type", item.fuelTypeName)
+                InfoRow("Business Unit", item.businessUnitName)
+                InfoRow("Warehouse", item.warehouseName)
+                InfoRow("Stock", item.stock.toString())
+                InfoRow("Vehicle", item.vehicleName)
+                InfoRow("Standard Consumption", item.standardConsumption.toString())
+                InfoRow("Previous Reading", item.previousReading.toString())
+                InfoRow("Previous Issue Date", item.previousIssueDate)
+                InfoRow("Meter Status", item.meterStatus)
+                InfoRow("Current Reading", item.currentReading.toString())
+                InfoRow("Entry By", item.entryBy)
+            }
+        }
     )
-    // Add more...
+}
+
+@Composable
+fun FuelIssueRequestReadOnlyScreen(fuelIssueRequest: FuelIssueRequest) {
+    Column(
+        modifier = Modifier
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        ReadOnlyNoFocusFieldVeh(label = "Issue No", value = fuelIssueRequest.issueNo)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Issue Date", value = fuelIssueRequest.issueDate)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Fuel Type", value = fuelIssueRequest.fuelTypeName)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Business Unit", value = fuelIssueRequest.businessUnitName)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Warehouse", value = fuelIssueRequest.warehouseName)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Stock (Litre)", value = fuelIssueRequest.stock.toString())
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Vehicle", value = fuelIssueRequest.vehicleName)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Standard Consumption (Litre)", value = fuelIssueRequest.standardConsumption.toString())
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Previous Reading", value = fuelIssueRequest.previousReading.toString())
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Previous Issue Date", value = fuelIssueRequest.previousIssueDate)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Meter Status", value = fuelIssueRequest.meterStatus)
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Current Reading", value = fuelIssueRequest.currentReading.toString())
+        Spacer(modifier = Modifier.height(8.dp))
+
+        ReadOnlyNoFocusFieldVeh(label = "Entry By", value = fuelIssueRequest.entryBy)
+    }
+}
+
+
+
+
+fun mockFuelIssueList(): List<FuelIssueRequest> = listOf(
+    FuelIssueRequest(
+        issueNo = "FI2025-08",
+        issueDate = "2025-08-07",
+        fuelTypeId = 1,
+        fuelTypeName = "Diesel",
+        businessUnitId = 2,
+        businessUnitName = "Transport Dept",
+        warehouseId = 3,
+        warehouseName = "Main Fuel Depot",
+        stock = 1245.50,
+        vehicleName = "LMV123 - Bolero",
+        standardConsumption = 12.34,
+        previousReading = 4521.5,
+        previousIssueDate = "2025-08-01",
+        meterStatus = "Meter Working",
+        currentReading = 4589.8,
+        entryBy = "AdminUser"
+    ),
+    FuelIssueRequest(
+        issueNo = "FI2025-09",
+        issueDate = "2025-08-08",
+        fuelTypeId = 1,
+        fuelTypeName = "Diesel",
+        businessUnitId = 2,
+        businessUnitName = "Transport Dept",
+        warehouseId = 3,
+        warehouseName = "Main Fuel Depot",
+        stock = 1100.0,
+        vehicleName = "TATA TIPPER 1613",
+        standardConsumption = 10.5,
+        previousReading = 6000.0,
+        previousIssueDate = "2025-08-03",
+        meterStatus = "Meter Working",
+        currentReading = 6080.0,
+        entryBy = "FuelClerk1"
+    ),
+    FuelIssueRequest(
+        issueNo = "FI2025-10",
+        issueDate = "2025-08-09",
+        fuelTypeId = 2,
+        fuelTypeName = "Petrol",
+        businessUnitId = 4,
+        businessUnitName = "Logistics",
+        warehouseId = 5,
+        warehouseName = "Logistics Yard",
+        stock = 900.75,
+        vehicleName = "HYUNDAI CRETA",
+        standardConsumption = 8.25,
+        previousReading = 12000.0,
+        previousIssueDate = "2025-08-05",
+        meterStatus = "Meter Not Working",
+        currentReading = 0.0,
+        entryBy = "ClerkB"
+    ),
+    FuelIssueRequest(
+        issueNo = "FI2025-11",
+        issueDate = "2025-08-09",
+        fuelTypeId = 1,
+        fuelTypeName = "Diesel",
+        businessUnitId = 3,
+        businessUnitName = "Engineering Dept",
+        warehouseId = 6,
+        warehouseName = "Diesel Depot B",
+        stock = 1500.0,
+        vehicleName = "ASHOK LEYLAND TRUCK",
+        standardConsumption = 14.0,
+        previousReading = 8000.0,
+        previousIssueDate = "2025-08-06",
+        meterStatus = "Meter Working",
+        currentReading = 8080.0,
+        entryBy = "EngineerUser"
+    )
+    // Add more as needed...
 )
+

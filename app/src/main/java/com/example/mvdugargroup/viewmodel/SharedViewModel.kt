@@ -10,6 +10,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import com.example.mvdugargroup.Api.BusinessUnit
+import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Api.FuelType
 import com.example.mvdugargroup.Api.LoginDetailsResponse
@@ -30,6 +31,7 @@ import kotlinx.coroutines.withContext
 import okhttp3.Dispatcher
 import retrofit2.Response
 import java.io.File
+import kotlin.toString
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -52,6 +54,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             prefs.saveFavoriteModules(modules)
         }
     }
+
     private val repository: FuelIssueRepository
         get() {
             return FuelIssueRepository(
@@ -82,7 +85,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     private var _userDetails = MutableStateFlow<LoginDetailsResponse?>(null)
     val userDetails: StateFlow<LoginDetailsResponse?> = _userDetails.asStateFlow()
-
 
 
     init {
@@ -375,5 +377,39 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private val _existingFuelEntries = MutableLiveData<FuelExistingEntry?>()
+    val existingFuelEntries: LiveData<FuelExistingEntry?> = _existingFuelEntries
+
+    fun fetchExistingEntries(fromDate: String, toDate: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response =
+                    withContext(Dispatchers.IO) {
+                        RetrofitInstance.api.fetchExistingEntry(
+                            fromDate,
+                            toDate
+                        )
+                    }
+
+                if (response.isSuccessful && response.body()?.isSuccess == 1) {
+                    _existingFuelEntries.value = response.body()!!.result
+                    Log.d("Meter", _existingFuelEntries.value.toString())
+
+                } else {
+                    _existingFuelEntries.value = null
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("ExistingEntries", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+
+            } catch (e: Exception) {
+                _existingFuelEntries.value = null
+                _errorMessage.value = "Fetch failed:Exception ${e.message}}"
+            }finally {
+                _isLoading.value = false
+            }
+        }
+    }
 
 }

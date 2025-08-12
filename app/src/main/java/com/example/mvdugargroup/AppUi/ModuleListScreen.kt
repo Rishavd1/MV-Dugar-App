@@ -187,10 +187,6 @@ fun ModuleListScreen(
         "SETUP" to Icons.Default.Settings
     )
 
-
-
-
-
     var expanded by remember { mutableStateOf(false) }
 
     val favoriteModules by sharedViewModel.favoriteModules.collectAsState()

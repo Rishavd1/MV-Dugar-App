@@ -40,6 +40,10 @@ interface ApiInterface {
     suspend fun fetchMeterStatus(): Response<MeterStatusResponse>
 
 
+    @GET("FuelIssueRequest/api/FuelIssueRequest/GetExistingEntrySearch")
+    suspend fun fetchExistingEntry(@Query("From_Date") fromDate: String,
+                                   @Query("To_Date") toDate: String): Response<FuelExistingEntryResponse>
+
     @Multipart
     @POST("FuelIssueRequest/api/FuelIssueRequest/Submit")
     suspend fun submitFuelIssue(

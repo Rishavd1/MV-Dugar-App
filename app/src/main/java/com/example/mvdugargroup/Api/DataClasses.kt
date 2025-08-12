@@ -49,6 +49,7 @@ data class WarehouseResponse(
     val statusCode: Int,
     val result: List<Warehouse>
 )
+
 @Serializable
 data class Warehouse(
     @SerializedName("wareHouseId")
@@ -99,6 +100,46 @@ data class FuelIssueRequest(
     val meterStatus: String,
     val currentReading: Double,
     val entryBy: String
+)
+
+@Serializable
+data class FuelExistingEntryResponse(
+    val statusCode: Int,
+    val isSuccess: Int,
+    val result: FuelExistingEntry
+)
+
+@Serializable
+data class FuelExistingEntry(
+    val tranId: Int,
+    val itemType: String,
+    val itemId: Int,
+    val requestNo: Int,
+    val issueDate: String,
+    val buId: Int,
+    val buDesc: String,
+    val whId: Int,
+    val whDesc: Int,
+    val assetId: Int,
+    val costCenter: Int,
+    val vehicleCode: String,
+    val vehicleName: String,
+    val quanity: Int,
+    val standardQty: Int,
+    val stock: Int,
+    val read_Unit: Int,
+    val standard_Cons: Int,
+    val standard_ConsT: Int,
+    val prevReading: Int,
+    val prevIssueDate: String,
+    val meterStatus: String,
+    val current_Reading: Int,
+    val remarks: String,
+    val entryBy: String,
+    val entryDate: String,
+    val modifyBy: String,
+    val modifyDate: String,
+    val canDelete: Int
 )
 
 

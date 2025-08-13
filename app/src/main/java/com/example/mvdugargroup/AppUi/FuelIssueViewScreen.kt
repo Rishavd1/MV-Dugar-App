@@ -187,6 +187,7 @@ fun FuelIssueViewScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         navController?.popBackStack()
+                        navController?.navigate(Route.MODULE_LIST)
 //                        navController?.popBackStack(Route.VEHICLE_IMAGE_CAPTURE,inclusive = false)
 //                        navController?.navigate(Route.VEHICLE_IMAGE_CAPTURE)
                     }) {

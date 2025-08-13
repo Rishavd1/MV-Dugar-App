@@ -1,6 +1,7 @@
 package com.example.mvdugargroup.viewmodel
 
 import android.app.Application
+import android.content.Context
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -468,9 +469,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    fun submitForm(navController: NavController) {
+    fun submitForm(context: Context, navController: NavController) {
         viewModelScope.launch {
             try {
+
+                _isLoading.value = true
+
                 val formData = _formState.value ?: return@launch
                 val image = _imageFile.value
 
@@ -521,13 +525,16 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
                     clearFormData()
 
-                    navController.navigate(Route.FUEL_ISSUE)
+                    navController.navigate(Route.FUEL_ISSUE_VIEW)
                     Log.d("TAG", "submitForm: Success -> ${response.body()?.string()}")
+                    Toast.makeText(context, "Data Successfully Saved! ✅", Toast.LENGTH_SHORT).show()
                 } else {
                     Log.e("TAG", "submitForm: Failed -> ${response.code()} ${response.message()}")
                 }
             } catch (e: Exception) {
                 Log.e("TAG", "submitForm: Exception -> ${e.message}", e)
+            }finally {
+                _isLoading.value = false
             }
         }
     }

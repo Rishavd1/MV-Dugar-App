@@ -54,6 +54,8 @@ import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.IconButton
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.compose.runtime.livedata.observeAsState
@@ -62,6 +64,7 @@ import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Route
+import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 
@@ -84,6 +87,7 @@ fun VehicleImageCaptureScreen(
 
     var permissionGranted by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
+    val isLoading by sharedViewModel.isLoading.collectAsState()
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
@@ -292,7 +296,7 @@ fun VehicleImageCaptureScreen(
 
                     Log.d(TAG, "VehicleImageCaptureScreen: $formData")
 
-                    sharedViewModel.submitForm(navController)
+                    sharedViewModel.submitForm(context,navController)
 
                     /*Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
                     navController.navigate(Route.FUEL_ISSUE_VIEW) {
@@ -310,6 +314,7 @@ fun VehicleImageCaptureScreen(
         }
 
     }
+    LoaderDialog(isShowing = isLoading)
 }
 
 fun createImageUri(context: Context): Uri {

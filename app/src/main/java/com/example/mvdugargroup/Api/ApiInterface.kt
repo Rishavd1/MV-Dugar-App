@@ -2,6 +2,7 @@ package com.example.mvdugargroup.Api
 
 import okhttp3.MultipartBody
 import okhttp3.RequestBody
+import okhttp3.ResponseBody
 import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Multipart
@@ -61,5 +62,31 @@ interface ApiInterface {
         @Query("VehicleName") vehicleName: String,
         @Query("IssueDate") issueDate: String
     ): Response<PreviousReadingResponse>
+
+    @Multipart
+    @POST("FuelIssueRequest/api/FuelIssueRequest/Submit")
+    suspend fun submitFuelIssue(
+        @Part("Standard_ConsT") standardConsT: RequestBody,
+        @Part("WHDesc") whDesc: RequestBody,
+        @Part("CostCenter") costCenter: RequestBody,
+        @Part("BUDesc") buDesc: RequestBody,
+        @Part("Current_Reading") currentReading: RequestBody,
+        @Part("IssueDate") issueDate: RequestBody,
+        @Part("EntryBy") entryBy: RequestBody,
+        @Part("AssetId") assetId: RequestBody,
+        @Part("Quantity") quantity: RequestBody,
+        @Part("WHId") whId: RequestBody,
+        @Part("ItemType") itemType: RequestBody,
+        @Part("Read_Unit") readUnit: RequestBody,
+        @Part("BUId") buId: RequestBody,
+        @Part("ItemId") itemId: RequestBody,
+        @Part("Standard_Cons") standardCons: RequestBody,
+        @Part("PrevIssueDate") prevIssueDate: RequestBody,
+        @Part("Stock") stock: RequestBody,
+        @Part("VehicleName") vehicleName: RequestBody,
+        @Part("PrevReading") prevReading: RequestBody,
+        @Part("MeterStatus") meterStatus: RequestBody,
+        @Part file: MultipartBody.Part
+    ): Response<ResponseBody>
 
 }

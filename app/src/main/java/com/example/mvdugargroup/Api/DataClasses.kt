@@ -101,8 +101,9 @@ data class FuelIssueRequest(
     val currentReading: Double,
     val entryBy: String,
     val assetId: String,
-    val costCenter: String
-
+    val costCenter: String,
+    val issueQuanity: Double,
+    val standardConsumptionType: String
 )
 
 @Serializable

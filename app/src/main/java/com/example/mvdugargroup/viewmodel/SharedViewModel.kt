@@ -10,6 +10,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavController
 import com.example.mvdugargroup.Api.BusinessUnit
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
@@ -20,6 +21,7 @@ import com.example.mvdugargroup.Api.PrevReadingResult
 import com.example.mvdugargroup.Api.StockQuantity
 import com.example.mvdugargroup.Api.VehicleList
 import com.example.mvdugargroup.Api.Warehouse
+import com.example.mvdugargroup.Route
 
 import com.example.mvdugargroup.network.RetrofitInstance
 import com.example.mvdugargroup.sharedPreference.PreferenceManager
@@ -32,6 +34,10 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Dispatcher
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import retrofit2.Response
 import java.io.File
 import kotlin.toString
@@ -342,14 +348,15 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val previousIssueDate = mutableStateOf<String?>(null)
     val meterStatusString = mutableStateOf<String?>(null)
     val currentReading = mutableStateOf<Double?>(null)
+    val standardConsumptionType = mutableStateOf<String>("")
 
     // Entry Info
-    val entryBy = mutableStateOf<String>("Admin")  // Default
+    val entryBy = mutableStateOf<String>("")  // Default
     val issueNo = mutableStateOf<String>("")       // Generate if needed
     val issueDate = mutableStateOf<String>("")     // Set via DatePicker
     val assetId = mutableStateOf<String>("")     // Set via DatePicker
     val costCenter = mutableStateOf<String>("")     // Set via DatePicker
-
+    val issueQuanity = mutableStateOf<Double>(0.0)     // Set via DatePicker>)
 
     private val _formState = MutableStateFlow<FuelIssueRequest?>(null)
     val formState: StateFlow<FuelIssueRequest?> = _formState
@@ -366,28 +373,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-    fun submitForm() {
-        viewModelScope.launch {
-            try {
-                val formData = _formState.value ?: return@launch
-                val image = _imageFile.value
-
-                val response = repository.sendFuelIssueRequest(formData, image)
-                if (response.isSuccessful) {
-                    Log.d("TAG", "submitForm:isSuccessful ${response.body().toString()}")
-                    Log.d("TAG", "submitForm:isSuccessful ${response.message()}")
-                    Log.d("TAG", "submitForm:isSuccessful ${response.code()}")
-                } else {
-                    Log.d("TAG", "submitForm:Unsuccessful ${response.body().toString()}")
-                    Log.d("TAG", "submitForm:Unsuccessful ${response.message()}")
-                    Log.d("TAG", "submitForm:Unsuccessful ${response.code()}")
-                }
-            } catch (e: Exception) {
-                Log.d("TAG", "submitForm:Exception ${e.message}")
-                e.printStackTrace()
-            }
-        }
-    }
 
     private val _existingFuelEntries = MutableLiveData<FuelExistingEntry?>()
     val existingFuelEntries: LiveData<FuelExistingEntry?> = _existingFuelEntries
@@ -481,6 +466,90 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 _isLoading.value = false
             }
         }
+    }
+
+    fun submitForm(navController: NavController) {
+        viewModelScope.launch {
+            try {
+                val formData = _formState.value ?: return@launch
+                val image = _imageFile.value
+
+                if (image == null || !image.exists()) {
+                    Log.e("TAG", "submitForm: No image selected or file not found")
+                    return@launch
+                }
+
+                // Helper to convert string/double to RequestBody
+                fun String.toPlainRequestBody() =
+                    this.toRequestBody("text/plain".toMediaTypeOrNull())
+                fun Double.toPlainRequestBody() =
+                    this.toString().toRequestBody("text/plain".toMediaTypeOrNull())
+
+                // Multipart file part
+                val imagePart = MultipartBody.Part.createFormData(
+                    "File",
+                    image.name,
+                    image.asRequestBody("image/*".toMediaTypeOrNull())
+                )
+
+                // Make API call
+                val response = RetrofitInstance.api.submitFuelIssue(
+                    standardConsT = formData.standardConsumptionType.toPlainRequestBody(),
+                    whDesc = formData.warehouseName.toPlainRequestBody(),
+                    costCenter = formData.costCenter.toPlainRequestBody(),
+                    buDesc = formData.businessUnitName.toPlainRequestBody(),
+                    currentReading = formData.currentReading.toPlainRequestBody(),
+                    issueDate = formData.issueDate.toPlainRequestBody(),
+                    entryBy = formData.entryBy.toPlainRequestBody(),
+                    assetId = formData.assetId.toPlainRequestBody(),
+                    quantity = formData.issueQuanity.toPlainRequestBody(),
+                    whId = formData.warehouseId.toString().toPlainRequestBody(),
+                    itemType = formData.fuelTypeName.toPlainRequestBody(),
+                    readUnit = formData.currentReading.toPlainRequestBody(),
+                    buId = formData.businessUnitId.toString().toPlainRequestBody(),
+                    itemId = formData.fuelTypeId.toString().toPlainRequestBody(),
+                    standardCons = formData.standardConsumption.toPlainRequestBody(),
+                    prevIssueDate = formData.previousIssueDate.toPlainRequestBody(),
+                    stock = formData.stock.toPlainRequestBody(),
+                    vehicleName = formData.vehicleName.toPlainRequestBody(),
+                    prevReading = formData.previousReading.toPlainRequestBody(),
+                    meterStatus = formData.meterStatus.toPlainRequestBody(),
+                    file = imagePart,
+                )
+
+                if (response.isSuccessful) {
+
+                    clearFormData()
+
+                    navController.navigate(Route.FUEL_ISSUE)
+                    Log.d("TAG", "submitForm: Success -> ${response.body()?.string()}")
+                } else {
+                    Log.e("TAG", "submitForm: Failed -> ${response.code()} ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Log.e("TAG", "submitForm: Exception -> ${e.message}", e)
+            }
+        }
+    }
+    private fun clearFormData() {
+        _formState.value = null
+        _imageFile.value = null
+        selectedFuelTypeId.value = null
+        selectedFuelTypeName.value = ""
+        stock.value = 0.0
+        selectedVehicleName.value = ""
+        standardConsumption.value = 0.0
+        previousReading.value = 0.0
+        previousIssueDate.value = ""
+        meterStatusString.value = ""
+        currentReading.value = 0.0
+        entryBy.value = ""
+        issueNo.value = ""
+        issueDate.value = ""
+        assetId.value = ""
+        costCenter.value = ""
+        issueQuanity.value = 0.0
+        standardConsumptionType.value = ""
     }
 
 }

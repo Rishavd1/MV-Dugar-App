@@ -194,6 +194,8 @@ fun ModuleListScreen(
 
     val userDetails by sharedViewModel.userDetails.collectAsState()
 
+
+
     LaunchedEffect(Unit) {
         sharedViewModel.loadUserDetails()
     }
@@ -218,6 +220,7 @@ fun ModuleListScreen(
                     fontSize = 24.sp,
                     color = Color.Black
                 )
+                sharedViewModel.entryBy.value = userDetails!!.userName
             } else {
                 CircularProgressIndicator()
             }

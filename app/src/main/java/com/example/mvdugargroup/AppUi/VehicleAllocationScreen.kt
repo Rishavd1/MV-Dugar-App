@@ -224,6 +224,7 @@ fun VehicleAllocationScreen(
         sharedViewModel.standardConsumption.value = previousReadingsData?.st_Average
         sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
         sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
+        sharedViewModel.standardConsumptionType.value = previousReadingsData?.unit.toString()
 
         Text(
             "Meter Status",
@@ -334,7 +335,11 @@ fun VehicleAllocationScreen(
                 val regex = """^\d*\.?\d{0,3}$""".toRegex() // allow up to 3 decimal places
                 if (sanitized.isEmpty() || sanitized.matches(regex)) {
                     issueQty = sanitized
+                    if (sanitized.isNotEmpty()) {
+                        sharedViewModel.issueQuanity.value = sanitized.toDoubleOrNull() ?: 0.0
+                    }
                 }
+
             }
         )
 

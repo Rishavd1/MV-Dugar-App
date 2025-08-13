@@ -258,32 +258,41 @@ fun VehicleImageCaptureScreen(
             val TAG = "VehicleImageCaptureScreen"
             Button(
                 onClick = {
-                    sharedViewModel.updateFormData(
-                        FuelIssueRequest(
-                            fuelTypeId = sharedViewModel.selectedFuelTypeId.value!!,
-                            fuelTypeName = sharedViewModel.selectedFuelTypeName.value!!,
-                            businessUnitId = sharedViewModel.selectedBusinessUnitId.value!!,
-                            businessUnitName = sharedViewModel.selectedBusinessUnitName.value!!,
-                            warehouseId = sharedViewModel.selectedWarehouseId.value!!,
-                            warehouseName = sharedViewModel.selectedWarehouseName.value!!,
-                            stock = sharedViewModel.stock.value!!,
-                            vehicleName = sharedViewModel.selectedVehicleName.value!!,
-                            standardConsumption = sharedViewModel.standardConsumption.value!!,
-                            previousReading = sharedViewModel.previousReading.value!!,
-                            previousIssueDate = sharedViewModel.previousIssueDate.value!!,
-                            meterStatus = sharedViewModel.meterStatusString.value!!,
-                            currentReading = sharedViewModel.currentReading.value!!,
-                            entryBy = sharedViewModel.entryBy.value,
-                            issueNo = sharedViewModel.issueNo.value,
-                            issueDate = sharedViewModel.issueDate.value,
-                            assetId = sharedViewModel.assetId.value,
-                            costCenter = sharedViewModel.costCenter.value
-                        )
+                    // Check if image is selected
+                    if (sharedViewModel.imageFile.value == null) {
+                        Toast.makeText(context, "Please select an image first", Toast.LENGTH_SHORT).show()
+                        return@Button
+                    }
+
+                    val formData = FuelIssueRequest(
+                        fuelTypeId = sharedViewModel.selectedFuelTypeId.value!!,
+                        fuelTypeName = sharedViewModel.selectedFuelTypeName.value.orEmpty(),
+                        businessUnitId = sharedViewModel.selectedBusinessUnitId.value!!,
+                        businessUnitName = sharedViewModel.selectedBusinessUnitName.value.orEmpty(),
+                        warehouseId = sharedViewModel.selectedWarehouseId.value!!,
+                        warehouseName = sharedViewModel.selectedWarehouseName.value.orEmpty(),
+                        stock = sharedViewModel.stock.value ?: 0.0, // assuming it's Double
+                        vehicleName = sharedViewModel.selectedVehicleName.value.orEmpty(),
+                        standardConsumption = sharedViewModel.standardConsumption.value ?: 0.0,
+                        previousReading = sharedViewModel.previousReading.value ?: 0.0,
+                        previousIssueDate = sharedViewModel.previousIssueDate.value.orEmpty(),
+                        meterStatus = sharedViewModel.meterStatusString.value.orEmpty(),
+                        currentReading = sharedViewModel.currentReading.value ?: 0.0,
+                        entryBy = sharedViewModel.entryBy.value.orEmpty(),
+                        issueNo = sharedViewModel.issueNo.value.orEmpty(),
+                        issueDate = sharedViewModel.issueDate.value.orEmpty(),
+                        assetId = sharedViewModel.assetId.value.orEmpty(),
+                        costCenter = sharedViewModel.costCenter.value.orEmpty(),
+                        issueQuanity = sharedViewModel.issueQuanity.value,
+                        standardConsumptionType = sharedViewModel.standardConsumptionType.value.orEmpty()
                     )
 
-                    Log.d(TAG, "VehicleImageCaptureScreen: ${sharedViewModel.formState.value}")
 
-                    sharedViewModel.submitForm()
+                    sharedViewModel.updateFormData(formData)
+
+                    Log.d(TAG, "VehicleImageCaptureScreen: $formData")
+
+                    sharedViewModel.submitForm(navController)
 
                     /*Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
                     navController.navigate(Route.FUEL_ISSUE_VIEW) {

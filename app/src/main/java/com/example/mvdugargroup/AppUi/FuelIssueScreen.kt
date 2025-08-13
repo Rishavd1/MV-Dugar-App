@@ -141,6 +141,8 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
     sharedViewModel.stock.value = stockQuantity?.stockQuantity
 
 
+    issueNo = "Issue 1"
+    sharedViewModel.issueNo.value = issueNo
     Log.d(TAG, "FuelIssueScreen: Stock ${stockQuantity?.stockQuantity}")
     Log.d(TAG, "FuelIssueScreen: ViewModelStock ${sharedViewModel.stock.value}")
 
@@ -176,7 +178,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             )
         }
         Spacer(modifier = Modifier.height(4.dp))
-        ReadOnlyNoFocusField("Issue No","issue1") //issueNo
+        ReadOnlyNoFocusField("Issue No",issueNo) //issueNo
         Spacer(modifier = Modifier.height(12.dp))
         Spacer(modifier = Modifier.height(4.dp))
         ReadOnlyNoFocusField("Issue Date",issueDate)

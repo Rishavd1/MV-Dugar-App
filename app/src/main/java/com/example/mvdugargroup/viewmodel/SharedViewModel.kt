@@ -2,6 +2,7 @@ package com.example.mvdugargroup.viewmodel
 
 import android.app.Application
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -346,6 +347,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val entryBy = mutableStateOf<String>("Admin")  // Default
     val issueNo = mutableStateOf<String>("")       // Generate if needed
     val issueDate = mutableStateOf<String>("")     // Set via DatePicker
+    val assetId = mutableStateOf<String>("")     // Set via DatePicker
+    val costCenter = mutableStateOf<String>("")     // Set via DatePicker
 
 
     private val _formState = MutableStateFlow<FuelIssueRequest?>(null)
@@ -362,19 +365,25 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         _imageFile.value = file
     }
 
+
     fun submitForm() {
         viewModelScope.launch {
             try {
                 val formData = _formState.value ?: return@launch
                 val image = _imageFile.value
 
-                /*val response = repository.sendFuelIssueRequest(formData, image)
+                val response = repository.sendFuelIssueRequest(formData, image)
                 if (response.isSuccessful) {
-
+                    Log.d("TAG", "submitForm:isSuccessful ${response.body().toString()}")
+                    Log.d("TAG", "submitForm:isSuccessful ${response.message()}")
+                    Log.d("TAG", "submitForm:isSuccessful ${response.code()}")
                 } else {
-
-                }*/
+                    Log.d("TAG", "submitForm:Unsuccessful ${response.body().toString()}")
+                    Log.d("TAG", "submitForm:Unsuccessful ${response.message()}")
+                    Log.d("TAG", "submitForm:Unsuccessful ${response.code()}")
+                }
             } catch (e: Exception) {
+                Log.d("TAG", "submitForm:Exception ${e.message}")
                 e.printStackTrace()
             }
         }

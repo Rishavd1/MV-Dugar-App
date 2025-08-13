@@ -268,7 +268,6 @@ fun VehicleImageCaptureScreen(
                             warehouseName = sharedViewModel.selectedWarehouseName.value!!,
                             stock = sharedViewModel.stock.value!!,
                             vehicleName = sharedViewModel.selectedVehicleName.value!!,
-//                            vehicleNumber = sharedViewModel.selectedVehicleNumber.value,
                             standardConsumption = sharedViewModel.standardConsumption.value!!,
                             previousReading = sharedViewModel.previousReading.value!!,
                             previousIssueDate = sharedViewModel.previousIssueDate.value!!,
@@ -276,11 +275,15 @@ fun VehicleImageCaptureScreen(
                             currentReading = sharedViewModel.currentReading.value!!,
                             entryBy = sharedViewModel.entryBy.value,
                             issueNo = sharedViewModel.issueNo.value,
-                            issueDate = sharedViewModel.issueDate.value
+                            issueDate = sharedViewModel.issueDate.value,
+                            assetId = sharedViewModel.assetId.value,
+                            costCenter = sharedViewModel.costCenter.value
                         )
                     )
 
                     Log.d(TAG, "VehicleImageCaptureScreen: ${sharedViewModel.formState.value}")
+
+                    sharedViewModel.submitForm()
 
                     /*Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
                     navController.navigate(Route.FUEL_ISSUE_VIEW) {

@@ -271,6 +271,9 @@ fun VehicleAllocationScreen(
         val standardComsumption = previousReadingsData?.st_AverageT
         val standardComsumptionValue = previousReadingsData?.st_Average
 
+        sharedViewModel.assetId.value = previousReadingsData?.fA_Id.toString()
+        sharedViewModel.costCenter.value = previousReadingsData?.cC_Id.toString()
+
         val TAG = "VehicleAllocationScreen"
         Log.d(TAG, "VehicleAllocationScreen: standardComsumptionValue  $standardComsumptionValue")
         Log.d(TAG, "VehicleAllocationScreen: standardComsumption  $standardComsumption")

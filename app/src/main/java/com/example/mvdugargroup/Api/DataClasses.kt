@@ -99,7 +99,10 @@ data class FuelIssueRequest(
     val previousIssueDate: String,
     val meterStatus: String,
     val currentReading: Double,
-    val entryBy: String
+    val entryBy: String,
+    val assetId: String,
+    val costCenter: String
+
 )
 
 @Serializable

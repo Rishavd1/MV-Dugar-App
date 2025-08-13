@@ -1,5 +1,6 @@
 package com.example.mvdugargroup.AppUi
 
+import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.IconButton
@@ -24,16 +25,19 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 import kotlinx.coroutines.coroutineScope
+import java.io.File
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,sharedViewModel: SharedViewModel = viewModel()) {
     val snackbarHostState = remember { SnackbarHostState() }
+    val context = LocalContext.current
 
     Scaffold(
         topBar = {
@@ -49,6 +53,9 @@ fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,share
         floatingActionButton = {
             if (imageUri != null) {
                 FloatingActionButton(onClick = {
+                    val file = uriToFile(context, imageUri)
+                    sharedViewModel.updateImageFile(file)
+
                     navController.previousBackStackEntry
                         ?.savedStateHandle
                         ?.set("confirmedImageUri", imageUri.toString())
@@ -56,6 +63,7 @@ fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,share
                 }) {
                     Icon(Icons.Default.Check, contentDescription = "Add Image")
                 }
+
             }
         }
     ) { padding ->
@@ -91,6 +99,14 @@ fun VehicleImagePreviewScreen(navController: NavController, imageUri: Uri?,share
             }
         }
     }
+}
+fun uriToFile(context: Context, uri: Uri): File {
+    val inputStream = context.contentResolver.openInputStream(uri) ?: return File("")
+    val tempFile = File.createTempFile("image", ".jpg", context.cacheDir)
+    tempFile.outputStream().use { output ->
+        inputStream.copyTo(output)
+    }
+    return tempFile
 }
 
 

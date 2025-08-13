@@ -1,10 +1,5 @@
 package com.example.mvdugargroup.AppUi
 
-import android.app.DatePickerDialog
-import android.widget.DatePicker
-import android.widget.Toast
-import androidx.activity.ComponentActivity
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,26 +69,21 @@ import java.time.LocalDate
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.core.content.ContentProviderCompat.requireContext
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.utils.DeleteConfirmationDialog
 import com.example.mvdugargroup.utils.LoaderDialog
-import com.google.android.material.datepicker.MaterialDatePicker
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
-import java.util.Calendar
 import kotlin.collections.emptyList
-import kotlin.time.ExperimentalTime
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -118,6 +108,8 @@ fun FuelIssueViewScreen(
     var warehousesName =
         listOf("Select Warehouse") + (warehouse?.map { it.warehouseDesc } ?: emptyList())
 
+    val vehicle by sharedViewModel.vehicleList.observeAsState()
+    var vehicleNames = listOf("Select Vehicle") + (vehicle?.map { it.description } ?: emptyList())
 
     val isLoading by sharedViewModel.isLoading.collectAsState()
 
@@ -133,7 +125,7 @@ fun FuelIssueViewScreen(
 
 
     var selectedFuelType by remember { mutableStateOf(fuelTypesName.first()) }
-
+    var selectedFuelTypeId by remember { mutableIntStateOf(0) }
     var selectedVehicle by remember { mutableStateOf("") }
     var selectedBusinessUnit by remember { mutableStateOf("") }
     var selectedWarehouse by remember { mutableStateOf("") }
@@ -147,12 +139,12 @@ fun FuelIssueViewScreen(
     var showToDatePicker by remember { mutableStateOf(false) }
 
     // Dropdown items
-    val vehicleList = listOf(
+    /*val vehicleList = listOf(
         "LMVMBCA001",
         "LMVMBCA002",
         "LMVMBCA003",
         "LMVMBCA005"
-    )
+    )*/
 
     val entries by sharedViewModel.existingFuelEntries.observeAsState()
     var entriesList = listOf(entries)
@@ -165,8 +157,13 @@ fun FuelIssueViewScreen(
         if (fuelTypesName.isNotEmpty()) {
             selectedFuelType = fuelTypesName[0]
         }
+
         if (businessUnitName.isNotEmpty()) {
             selectedBusinessUnit = businessUnitName[0]
+        }
+
+        if (vehicleNames.isNotEmpty()) {
+            selectedVehicle = vehicleNames[0]
         }
     }
 
@@ -355,6 +352,9 @@ fun FuelIssueViewScreen(
                                 sharedViewModel.fuelTypes.value?.find { item -> item.itemType == selectedFuelType }?.itemId
                             val buId =
                                 sharedViewModel.businessType.value?.find { item -> item.businessUnitDesc == selectedBusinessUnit }?.businessUnitId
+                            if (ftId != null) {
+                                sharedViewModel.fetchVehicleList(ftId)
+                            }
                             if (ftId != null && buId != null) {
                                 sharedViewModel.fetchWarehouse(buId, ftId)
                             }
@@ -366,7 +366,7 @@ fun FuelIssueViewScreen(
                         label = "Vehicle",
                         value = selectedVehicle,
                         expanded = vehicleExpanded,
-                        items = vehicleList,
+                        items = vehicleNames,
                         onExpandedChange = { vehicleExpanded = !vehicleExpanded },
                         onItemSelected = {
                             selectedVehicle = it
@@ -469,7 +469,11 @@ fun FuelIssueViewScreen(
 
                                         showToDatePicker = true
                                     }
-                                    .border(1.dp, Color(0xFFE0E0E0), RoundedCornerShape(12.dp)) // Subtle border
+                                    .border(
+                                        1.dp,
+                                        Color(0xFFE0E0E0),
+                                        RoundedCornerShape(12.dp)
+                                    ) // Subtle border
                                     .padding(horizontal = 16.dp, vertical = 14.dp) // Inner padding
                             ) {
                                 Row(
@@ -597,12 +601,6 @@ fun DatePickerField(
 }
 
 
-
-
-
-
-
-
 @Preview(showBackground = true)
 @Composable
 fun PreviewFuelIssueSearchScreen() {
@@ -695,19 +693,19 @@ fun FuelIssueDetailDialog(item: FuelExistingEntry, onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                InfoRow("Issue No", item.tranId.toString()?:"null")
-                InfoRow("Issue Date", item.issueDate?:"null")
-                InfoRow("Fuel Type", item.itemType?:"null")
-                InfoRow("Business Unit", item.buDesc?:"null")
-                InfoRow("Warehouse", item.whDesc.toString()?:"null")
-                InfoRow("Stock", item.stock.toString()?:"null")
-                InfoRow("Vehicle", item.vehicleName?:"null")
-                InfoRow("Standard Consumption", item.standard_Cons.toString()?:"null")
-                InfoRow("Previous Reading", item.prevReading.toString()?:"null")
-                InfoRow("Previous Issue Date", item.prevIssueDate?:"null")
-                InfoRow("Meter Status", item.meterStatus?:"null")
-                InfoRow("Current Reading", item.current_Reading.toString()?:"null")
-                InfoRow("Entry By", item.entryBy?:"null")
+                InfoRow("Issue No", item.tranId.toString() ?: "null")
+                InfoRow("Issue Date", item.issueDate ?: "null")
+                InfoRow("Fuel Type", item.itemType ?: "null")
+                InfoRow("Business Unit", item.buDesc ?: "null")
+                InfoRow("Warehouse", item.whDesc.toString() ?: "null")
+                InfoRow("Stock", item.stock.toString() ?: "null")
+                InfoRow("Vehicle", item.vehicleName ?: "null")
+                InfoRow("Standard Consumption", item.standard_Cons.toString() ?: "null")
+                InfoRow("Previous Reading", item.prevReading.toString() ?: "null")
+                InfoRow("Previous Issue Date", item.prevIssueDate ?: "null")
+                InfoRow("Meter Status", item.meterStatus ?: "null")
+                InfoRow("Current Reading", item.current_Reading.toString() ?: "null")
+                InfoRow("Entry By", item.entryBy ?: "null")
             }
         }
     )

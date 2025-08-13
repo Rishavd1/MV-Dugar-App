@@ -1,5 +1,6 @@
 package com.example.mvdugargroup.AppUi
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,8 +24,15 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.utils.LoaderDialog
@@ -41,14 +49,20 @@ fun VehicleAllocationScreen(
     val scrollState = rememberScrollState()
     val isLoading by sharedViewModel.isLoading.collectAsState()
     val meterStatusList by sharedViewModel.meterStatus.observeAsState(emptyList())
+    val vehicleList by sharedViewModel.vehicleList.observeAsState(emptyList())
+    val previousReadingsData by sharedViewModel.previousReadingsData.observeAsState()
 
-    val vehicleList = listOf(
-        "LMVMBCA001",
-        "LMVMBCA002",
-        "LMVMBCA003",
-        "LMVMBCA004",
-        "LMVMBCA005",
-    )
+    val vehicleNames =
+        listOf("Select Vehicle") + (vehicleList?.map { it.description } ?: emptyList())
+
+    /* val vehicleList = listOf(
+         "LMVMBCA001",
+         "LMVMBCA002",
+         "LMVMBCA003",
+         "LMVMBCA004",
+         "LMVMBCA005",
+     )*/
+
 
     var selectedVehicle by remember { mutableStateOf("") }
     var showDropdown by remember { mutableStateOf(false) }
@@ -63,8 +77,8 @@ fun VehicleAllocationScreen(
     var currentReading by remember { mutableStateOf("") }
     var currentReadingError by remember { mutableStateOf("") }
 
-    var issueQty by remember { mutableStateOf("0.000") }
-    var standardQty by remember { mutableStateOf("0.000") }
+    var issueQty by remember { mutableStateOf("0.0") }
+    var standardQty by remember { mutableStateOf("0.0") }
 
     var remarks by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -72,15 +86,21 @@ fun VehicleAllocationScreen(
 
     var selectedMeterStatus by remember { mutableStateOf("") }
 
+    var generalErrorMessage by remember { mutableStateOf("") }
+
     LaunchedEffect(Unit) {
         sharedViewModel.fetchMeterStatus()
+        sharedViewModel.fetchVehicleList(sharedViewModel.selectedFuelTypeId.value!!)
     }
 
     LaunchedEffect(meterStatusList) {
-        selectedVehicle = vehicleList[0]
+        selectedVehicle = vehicleNames[0]
 
         if (meterStatusList.isNotEmpty() && selectedMeterStatus.isEmpty()) {
             selectedMeterStatus = meterStatusList[0].meterStatus
+
+            sharedViewModel.meterStatusString.value = selectedMeterStatus
+
         }
     }
 
@@ -102,9 +122,11 @@ fun VehicleAllocationScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController.navigate(Route.FUEL_ISSUE){
-                    popUpTo(Route.FUEL_ISSUE) { inclusive = true }
-                } }
+                onClick = {
+                    navController.navigate(Route.FUEL_ISSUE) {
+                        popUpTo(Route.FUEL_ISSUE) { inclusive = true }
+                    }
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -122,9 +144,23 @@ fun VehicleAllocationScreen(
         }
 
 
-        var vehicleExpanded by remember { mutableStateOf(false) }
+//        var vehicleExpanded by remember { mutableStateOf(false) }
+        VehicleAutoCompleteTextView(
+            vehicleNames = vehicleNames,
+            selectedVehicle = selectedVehicle,
+            onVehicleSelected = { selectedVehicle ->
+                sharedViewModel.selectedVehicleName.value = selectedVehicle
+                Log.d("TAG", "Selected vehicle: $selectedVehicle")
+                val issueDate = sharedViewModel.issueDate.value
+                sharedViewModel.fetchPrevReading(selectedVehicle, issueDate)
 
-        Box(modifier = Modifier.fillMaxWidth()) {
+                sharedViewModel.selectedVehicleNumber.value =
+                    vehicleList?.find { it.description == selectedVehicle.trim() }?.code
+
+            }
+        )
+
+        /*Box(modifier = Modifier.fillMaxWidth()) {
             OutlinedTextField(
                 value = selectedVehicle,
                 onValueChange = {
@@ -151,7 +187,7 @@ fun VehicleAllocationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
             ) {
-                vehicleList
+                vehicleNames
                     .filter { it.contains(searchText, ignoreCase = true) }
                     .forEach { item ->
                         DropdownMenuItem(
@@ -164,18 +200,30 @@ fun VehicleAllocationScreen(
                         )
                     }
             }
-        }
+        }*/
 
         Spacer(modifier = Modifier.height(16.dp))
 
 
 
-        ReadOnlyNoFocusFieldVeh(label = "Standard Consumption", value = standardCons)
+        ReadOnlyNoFocusFieldVeh(
+            label = "Standard Consumption",
+            value = previousReadingsData?.st_AverageT.toString()
+        )
         Spacer(modifier = Modifier.height(12.dp))
-        ReadOnlyNoFocusFieldVeh(label = "Previous Reading", value = prevReading)
+        ReadOnlyNoFocusFieldVeh(
+            label = "Previous Reading",
+            value = previousReadingsData?.preV_READING.toString()
+        )
         Spacer(modifier = Modifier.height(12.dp))
-        ReadOnlyNoFocusFieldVeh(label = "Previous Issue Date", value = prevIssueDate)
+        ReadOnlyNoFocusFieldVeh(
+            label = "Previous Issue Date",
+            value = previousReadingsData?.preV_DATE.toString()
+        )
         Spacer(modifier = Modifier.height(12.dp))
+        sharedViewModel.standardConsumption.value = previousReadingsData?.st_Average
+        sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
+        sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
 
         Text(
             "Meter Status",
@@ -213,37 +261,58 @@ fun VehicleAllocationScreen(
                 }
             }
         }
+        sharedViewModel.currentReading.value = currentReading.toDoubleOrNull()
 
         Spacer(modifier = Modifier.height(12.dp))
 
 
-        val prevReadingDouble = prevReading.toDoubleOrNull() ?: 0.0
+        val prevReadingDouble = previousReadingsData?.preV_READING?.toDouble() ?: 0.0
         val currentReadingDouble = currentReading.toDoubleOrNull()
+        val standardComsumption = previousReadingsData?.st_AverageT
+        val standardComsumptionValue = previousReadingsData?.st_Average
 
+        val TAG = "VehicleAllocationScreen"
+        Log.d(TAG, "VehicleAllocationScreen: standardComsumptionValue  $standardComsumptionValue")
+        Log.d(TAG, "VehicleAllocationScreen: standardComsumption  $standardComsumption")
         LabelledField(
             label = "Current Reading",
             value = currentReading,
-            onValueChange = {
-                currentReading = it
-                if (selectedMeterStatus.contains("METER WORKING", ignoreCase = true)) {
-                    val cr = it.toDoubleOrNull()
-                    currentReadingError = if (cr == null || cr <= prevReadingDouble) {
-                        "Must be greater than previous reading"
+            onValueChange = { input ->
+                val sanitized = input.replace(",", ".")
+                val regex = """^\d*\.?\d{0,1}$""".toRegex()
+
+                if (sanitized.isEmpty() || sanitized.matches(regex)) {
+                    currentReading = sanitized
+                    if (selectedMeterStatus.contains("METER WORKING", ignoreCase = true)) {
+                        val cr = sanitized.toDoubleOrNull()
+                        if (cr == null || cr <= prevReadingDouble) {
+                            currentReadingError = "Must be greater than previous reading"
+                            standardQty = "0.0"
+                        } else {
+                            val diff = when {
+                                standardComsumption?.contains("KM") == true ->
+                                    (cr - prevReadingDouble) / (standardComsumptionValue ?: 0.0)
+
+                                standardComsumption?.endsWith("HR") == true ->
+                                    (cr - prevReadingDouble) * (standardComsumptionValue ?: 0.0)
+
+                                else -> 0.0
+                            }
+                            Log.d(TAG, "VehicleAllocationScreen: diff=$diff")
+                            standardQty = String.format("%.1f", diff)
+                            currentReadingError = ""
+                        }
                     } else {
-                        // calculate Standard Quantity
-                        val diff = cr - prevReadingDouble
-                        standardQty = String.format("%.3f", diff)
-                        ""
+                        currentReadingError = ""
+                        standardQty = "0.0"
                     }
-                } else {
-                    currentReadingError = ""
-                    standardQty = "0.000"
                 }
             },
             isError = currentReadingError.isNotEmpty(),
             errorText = currentReadingError,
             enabled = selectedMeterStatus.contains("METER WORKING", ignoreCase = true)
         )
+
 
         ReadOnlyNoFocusFieldVeh(label = "Standard Quantity", value = standardQty)
         Spacer(modifier = Modifier.height(12.dp))
@@ -254,11 +323,29 @@ fun VehicleAllocationScreen(
             enabled = false
         )*/
 
-        LabelledField(label = "Issue Quantity", value = issueQty, onValueChange = {
-            issueQty = it
+        LabelledField(
+            label = "Issue Quantity",
+            value = issueQty,
+            onValueChange = { input ->
+                val sanitized = input.replace(",", ".")
+                val regex = """^\d*\.?\d{0,3}$""".toRegex() // allow up to 3 decimal places
+                if (sanitized.isEmpty() || sanitized.matches(regex)) {
+                    issueQty = sanitized
+                }
+            }
+        )
 
-        })
+        val readingPercentage = previousReadingsData?.diff_Perc ?: 1  //diff_Reading
+
+        val issueQtyDouble = issueQty.toDoubleOrNull() ?: 0.0
+        val standardQtyDouble = standardQty.toDoubleOrNull() ?: 0.0
+
+        val remarksRequired = if (standardQtyDouble > 0) {
+            ((issueQtyDouble - standardQtyDouble) / standardQtyDouble) * 100 > readingPercentage
+        } else false
+
         Column(modifier = Modifier.fillMaxWidth()) {
+            val focusManager = LocalFocusManager.current
             Text(text = "Remarks", fontWeight = FontWeight.Bold)
             Spacer(modifier = Modifier.height(4.dp))
             OutlinedTextField(
@@ -267,25 +354,77 @@ fun VehicleAllocationScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(100.dp),
-                singleLine = true,
+                singleLine = false,
                 shape = RoundedCornerShape(12.dp),
-                isError = false,
-                enabled = true
+                isError = remarksRequired && remarks.isBlank(),
+                enabled = true,
+                placeholder = { Text("Enter remarks if required") },
+                keyboardOptions = KeyboardOptions.Default.copy(
+                    imeAction = ImeAction.Done
+                ),
+                keyboardActions = KeyboardActions(
+                    onDone = {
+                        focusManager.clearFocus()
+                    }
+                )
             )
-
-
+            if (remarksRequired && remarks.isBlank()) {
+                Text(
+                    text = "Issue Qty greater than Standard Qty by $readingPercentage% and for that remarks mandatory.",
+                    color = Color.Red,
+                    fontSize = 12.sp
+                )
+            }
         }
+
 
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             modifier = Modifier
                 .fillMaxWidth()
                 .height(52.dp), onClick = {
+
+                generalErrorMessage = "" // reset before validation
+                // Validation 1: Current Reading
+                if (selectedMeterStatus.contains("METER WORKING", ignoreCase = true)) {
+                    val cr = currentReading.toDoubleOrNull()
+                    if (cr == null || cr <= prevReadingDouble) {
+                        generalErrorMessage =
+                            "Current Reading must be greater than Previous Reading"
+                        return@Button
+                    }
+                }
+
+                // Validation 2: Remarks when Issue Qty exceeds Standard Qty
+                if (remarksRequired && remarks.isBlank()) {
+                    generalErrorMessage =
+                        "Issue Qty greater than Standard Qty by $readingPercentage% and for that remarks mandatory."
+                    return@Button
+                }
+
+                // Validation 3: Issue Qty must be > 0
+                if ((issueQty.toDoubleOrNull() ?: 0.0) <= 0) {
+                    generalErrorMessage = "Issue Quantity must be greater than 0"
+                    return@Button
+                }
+                if (remarksRequired && remarks.isEmpty()) {
+                    generalErrorMessage = "Remarks is mandatory in this case."
+                    return@Button
+                }
+
                 navController.navigate(Route.VEHICLE_IMAGE_CAPTURE) {
                     popUpTo(Route.MODULE_LIST) { inclusive = true }
                 }
             }) {
             Text("NEXT")
+        }
+        if (generalErrorMessage.isNotEmpty()) {
+            Text(
+                text = generalErrorMessage,
+                color = Color.Red,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(top = 8.dp)
+            )
         }
         LoaderDialog(isShowing = isLoading)
         Spacer(modifier = Modifier.height(25.dp))
@@ -293,12 +432,90 @@ fun VehicleAllocationScreen(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VehicleAutoCompleteTextView(
+    vehicleNames: List<String>,
+    selectedVehicle: String,
+    onVehicleSelected: (String) -> Unit
+) {
+    var searchText by remember { mutableStateOf(selectedVehicle) }
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = {
+                searchText = it
+                expanded = true
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Clear Button
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchText = ""
+                            onVehicleSelected("") // reset selection
+                            expanded = false
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                    // Default Dropdown Icon
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            },
+            placeholder = { Text("Select Vehicle") },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        val filteredList = vehicleNames.filter {
+            it.startsWith(searchText, ignoreCase = true)
+        }
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            if (filteredList.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No matches found") },
+                    onClick = { expanded = false }
+                )
+            } else {
+                filteredList.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            searchText = item
+                            onVehicleSelected(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
 
 @Composable
 fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
     Column {
-        Text(text = label
-            , fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
+        Text(
+            text = label, fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start)
+        )
         Spacer(Modifier.height(4.dp))
         Box(
             modifier = Modifier
@@ -336,7 +553,11 @@ fun LabelledField(
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             isError = isError,
-            enabled = enabled
+            enabled = enabled,
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = ImeAction.Done
+            )
         )
         if (isError && errorText.isNotEmpty()) {
             Text(
@@ -350,11 +571,11 @@ fun LabelledField(
     }
 }
 
-@Preview(showBackground = true)
+/*@Preview(showBackground = true)
 @Composable
 fun VehicleAllocationScreenPreview() {
     val dummyNavController = rememberNavController()
     MVDugarGroupTheme {
         VehicleAllocationScreen(navController = dummyNavController)
     }
-}
+}*/

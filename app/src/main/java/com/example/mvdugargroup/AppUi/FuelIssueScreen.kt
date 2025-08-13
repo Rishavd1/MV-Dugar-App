@@ -1,6 +1,7 @@
 package com.example.mvdugargroup.AppUi
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -54,6 +56,8 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
+
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         sharedViewModel.fetchFuelTypes()
@@ -82,7 +86,10 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
     val issueDate: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH))
 
+    sharedViewModel.issueDate.value = issueDate
     val scrollState = rememberScrollState()
+
+    val TAG = "FuelIssueScreen"
 
     LaunchedEffect(fuelTypesName,businessUnitName) {
         if (fuelTypesName.isNotEmpty()) {
@@ -102,6 +109,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
         if (warehousesName.isNotEmpty() && selectedWarehouse.isEmpty()) {
             selectedWarehouse = warehousesName[0]
         }
+
         val ftId = sharedViewModel.fuelTypes.value
             ?.find { it.itemType == selectedFuelType }?.itemId
         val buId = sharedViewModel.businessType.value
@@ -110,14 +118,31 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             ?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId
 
         if (ftId != null && buId != null && whId != null) {
+            // Fetch stock quantity
             sharedViewModel.fetchStockQuantity(buId, ftId, whId)
+
+            // Save selections in ViewModel
+            sharedViewModel.selectedFuelTypeId.value = ftId
+            sharedViewModel.selectedBusinessUnitId.value = buId
+            sharedViewModel.selectedWarehouseId.value = whId
+            sharedViewModel.selectedFuelTypeName.value = selectedFuelType
+            sharedViewModel.selectedBusinessUnitName.value = selectedBusinessUnit
+            sharedViewModel.selectedWarehouseName.value = selectedWarehouse
+
+            Log.d("TAG", "FuelIssueScreen: ftId=$ftId, buId=$buId, whId=$whId")
         }
     }
+
 
     val stockDisplay = stockQuantity?.stockQuantity?.let {
         String.format("%.3f", it)
     } ?: "0.0"
 
+    sharedViewModel.stock.value = stockQuantity?.stockQuantity
+
+
+    Log.d(TAG, "FuelIssueScreen: Stock ${stockQuantity?.stockQuantity}")
+    Log.d(TAG, "FuelIssueScreen: ViewModelStock ${sharedViewModel.stock.value}")
 
     Column(
         modifier = Modifier
@@ -185,16 +210,21 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                     DropdownMenuItem(
                         text = { Text(type) },
                         onClick = {
-                            selectedFuelType = type
-                            fuelTypeExpanded = false
-                            val _selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
-                            selectedFuelTypeId = _selectedFuelTypeId.toString()
-                            val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
-                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $_selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+                            try {
+                                selectedFuelType = type
+                                fuelTypeExpanded = false
+                                val _selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                                selectedFuelTypeId = _selectedFuelTypeId.toString()
+                                val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
+                                Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $_selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
 
-                            if (_selectedFuelTypeId != null && selectedBusinessUnitId != null) {
-                                sharedViewModel.fetchWarehouse(selectedBusinessUnitId, _selectedFuelTypeId)
+                                if (_selectedFuelTypeId != null && selectedBusinessUnitId != null) {
+                                    sharedViewModel.fetchWarehouse(selectedBusinessUnitId, _selectedFuelTypeId)
+                                }
+                            }catch (e: Exception){
+                                Toast.makeText(context, "Unfortunate Error Occurred!\n ${e.message}", Toast.LENGTH_SHORT).show()
                             }
+
                         }
                     )
                 }
@@ -270,23 +300,31 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                     DropdownMenuItem(
                         text = { Text(warehouse) },
                         onClick = {
-                            selectedWarehouse = warehouse
-                            warehouseExpanded = false
-                            val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
-                            val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
-                            val selectedWarehouseId = sharedViewModel.warehouse.value?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId!!
-                            Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
-                            if (selectedFuelTypeId != null && selectedBusinessUnitId != null && selectedWarehouseId != null) {
-                                sharedViewModel.selectedFuelTypeId.value = selectedFuelTypeId
-                                sharedViewModel.selectedBusinessUnitId.value = selectedBusinessUnitId
-                                sharedViewModel.selectedWarehouseId.value = selectedWarehouseId
-                                Log.d("TAG", "FuelIssueScreen: selectedWarehouseId = $selectedWarehouseId")
-                                sharedViewModel.selectedFuelTypeName.value = selectedFuelType
-                                sharedViewModel.selectedBusinessUnitName.value = selectedBusinessUnit
-                                sharedViewModel.selectedWarehouseName.value = selectedWarehouse
+                            try {
 
-                                sharedViewModel.fetchStockQuantity(selectedBusinessUnitId, selectedFuelTypeId,selectedWarehouseId)
+                                selectedWarehouse = warehouse
+                                warehouseExpanded = false
+                                val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
+                                val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
+                                val selectedWarehouseId = sharedViewModel.warehouse.value?.find { it.warehouseDesc == selectedWarehouse }?.warehouseId!!
+                                Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
+                                if (selectedFuelTypeId != null && selectedBusinessUnitId != null && selectedWarehouseId != null) {
+                                    sharedViewModel.selectedFuelTypeId.value = selectedFuelTypeId
+                                    sharedViewModel.selectedBusinessUnitId.value = selectedBusinessUnitId
+                                    sharedViewModel.selectedWarehouseId.value = selectedWarehouseId
+                                    Log.d("TAG", "FuelIssueScreen: selectedWarehouseId = $selectedWarehouseId")
+                                    sharedViewModel.selectedFuelTypeName.value = selectedFuelType
+                                    sharedViewModel.selectedBusinessUnitName.value = selectedBusinessUnit
+                                    sharedViewModel.selectedWarehouseName.value = selectedWarehouse
+
+                                    Log.d(TAG, "FuelIssueScreen: selectedFuelTypeId ${sharedViewModel.selectedFuelTypeId.value}")
+
+                                    sharedViewModel.fetchStockQuantity(selectedBusinessUnitId, selectedFuelTypeId,selectedWarehouseId)
+                                }
+                            }catch (e: Exception){
+                                Toast.makeText(context, "Unfortunate Error Occurred!\n ${e.message}", Toast.LENGTH_SHORT).show()
                             }
+
                         }
                     )
                 }
@@ -365,6 +403,7 @@ fun ReadOnlyNoFocusField(value: String) {
 }*/
 
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun FuelIssueScreenPreview() {
@@ -372,4 +411,4 @@ fun FuelIssueScreenPreview() {
     MVDugarGroupTheme {
         FuelIssueScreen(navController = dummyNavController)
     }
-}
+}*/

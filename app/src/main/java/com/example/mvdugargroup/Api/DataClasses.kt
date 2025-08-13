@@ -143,4 +143,40 @@ data class FuelExistingEntry(
 )
 
 
+@Serializable
+data class VehicleListResponse(
+    val statusCode: Int,
+    val isSuccess: Int,
+    val result: List<VehicleList>
+)
+
+@Serializable
+data class VehicleList(
+    val slNo: Int,
+    val code: String,
+    val description: String
+)
+
+@Serializable
+data class PreviousReadingResponse(
+    val statusCode: Int,
+    val isSuccess: Int,
+    val result: PrevReadingResult
+)
+
+@Serializable
+data class PrevReadingResult(
+    val slNo: Int,
+    val cC_Id: Int,
+    val fA_Id: Int,
+    val code: String,
+    val unit: String,
+    val st_Average: Double,
+    val st_AverageT: String,
+    val description: String,
+    val preV_READING: Int,
+    val preV_DATE: String,
+    val diff_Perc: Int,
+    val diff_Reading: Int
+)
 

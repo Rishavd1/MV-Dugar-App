@@ -15,7 +15,9 @@ import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Api.FuelType
 import com.example.mvdugargroup.Api.LoginDetailsResponse
 import com.example.mvdugargroup.Api.MeterStatus
+import com.example.mvdugargroup.Api.PrevReadingResult
 import com.example.mvdugargroup.Api.StockQuantity
+import com.example.mvdugargroup.Api.VehicleList
 import com.example.mvdugargroup.Api.Warehouse
 
 import com.example.mvdugargroup.network.RetrofitInstance
@@ -311,7 +313,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 _errorMessage.value = "Exception: ${e.localizedMessage}"
                 Log.e("Meter", "Exception $e")
             } finally {
-                _isLoading.value = false
+                // _isLoading.value = false
             }
         }
     }
@@ -332,7 +334,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     val stock = mutableStateOf<Double?>(null)
 
     // Vehicle Info
-    val vehicleName = mutableStateOf<String?>(null)
+    val selectedVehicleName = mutableStateOf<String?>(null)
+    val selectedVehicleNumber = mutableStateOf<String?>(null)
     val standardConsumption = mutableStateOf<Double?>(null)
     val previousReading = mutableStateOf<Double?>(null)
     val previousIssueDate = mutableStateOf<String?>(null)
@@ -365,12 +368,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 val formData = _formState.value ?: return@launch
                 val image = _imageFile.value
 
-                val response = repository.sendFuelIssueRequest(formData, image)
+                /*val response = repository.sendFuelIssueRequest(formData, image)
                 if (response.isSuccessful) {
 
                 } else {
 
-                }
+                }*/
             } catch (e: Exception) {
                 e.printStackTrace()
             }
@@ -407,6 +410,65 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 _existingFuelEntries.value = null
                 _errorMessage.value = "Fetch failed:Exception ${e.message}}"
             }finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+
+    private val _vehicleList = MutableLiveData<List<VehicleList>?>()
+    val vehicleList: LiveData<List<VehicleList>?> = _vehicleList
+
+    fun fetchVehicleList(fuelTypeId : Int){
+        viewModelScope.launch {
+            // _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response = withContext(Dispatchers.IO){
+                    RetrofitInstance.api.fetchVehicleList(fuelTypeId)
+                }
+                if (response.isSuccessful && response.body()?.isSuccess == 1) {
+                    _vehicleList.value = response.body()?.result
+                    Log.d("Meter", _existingFuelEntries.value.toString())
+
+                } else {
+                    _vehicleList.value = null
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                    Log.e("ExistingEntries", "Code: ${response.code()}, Message: ${response.message()}")
+                }
+
+            }catch (e: Exception){
+                _vehicleList.value = null
+                _errorMessage.value = "Fetch failed:Exception ${e.message}}"
+            }finally {
+                _isLoading.value = false
+            }
+        }
+    }
+
+    private val _previousReadingsData = MutableLiveData<PrevReadingResult?>()
+    val previousReadingsData: LiveData<PrevReadingResult?> = _previousReadingsData
+
+
+    fun fetchPrevReading(vehicleName: String, issueDate: String) {
+        viewModelScope.launch {
+            _isLoading.value = true
+            _errorMessage.value = null
+            try {
+                val response = withContext(Dispatchers.IO) {
+                    RetrofitInstance.api.fetchPrevReadingFetch(vehicleName, issueDate)
+                }
+                if (response.isSuccessful && response.body()?.isSuccess == 1) {
+                    _previousReadingsData.value = response.body()?.result
+                    Log.d("PrevReading", "Fetched: ${response.body()?.result}")
+                } else {
+                    _previousReadingsData.value = null
+                    _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
+                }
+            } catch (e: Exception) {
+                _previousReadingsData.value = null
+                _errorMessage.value = "Fetch failed: Exception ${e.message}"
+            } finally {
                 _isLoading.value = false
             }
         }

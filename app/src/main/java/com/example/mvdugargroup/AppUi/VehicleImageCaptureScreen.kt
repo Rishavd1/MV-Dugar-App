@@ -46,6 +46,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import com.example.mvdugargroup.PermissionDeniedDialog
 import android.provider.Settings
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -59,12 +60,16 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.rememberAsyncImagePainter
 import coil.request.ImageRequest
+import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 
 @Composable
-fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
+fun VehicleImageCaptureScreen(
+    navController: NavController,
+    sharedViewModel: SharedViewModel = viewModel()
+) {
     val context = LocalContext.current
 
     val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -183,12 +188,12 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
                     .weight(1f)
             )
         }
-            /*Text(
-                "Capture Vehicle Meter Image",
-                fontSize = 22.sp,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(top = 30.dp)
-            )*/
+        /*Text(
+            "Capture Vehicle Meter Image",
+            fontSize = 22.sp,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(top = 30.dp)
+        )*/
 
         Box(
             modifier = Modifier
@@ -211,6 +216,7 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
                     contentScale = ContentScale.FillHeight,
                     modifier = Modifier.fillMaxSize()
                 )
+
             } ?: run {
                 Text("No Image Captured", color = Color.Gray)
             }
@@ -241,21 +247,49 @@ fun VehicleImageCaptureScreen(navController: NavController,sharedViewModel: Shar
 
             Button(
                 onClick = { launcherGallery.launch("image/*") },
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
             ) {
                 Icon(Icons.Default.Image, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
                 Text("Choose from Gallery")
             }
-
+            val TAG = "VehicleImageCaptureScreen"
             Button(
                 onClick = {
-                    Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
+                    sharedViewModel.updateFormData(
+                        FuelIssueRequest(
+                            fuelTypeId = sharedViewModel.selectedFuelTypeId.value!!,
+                            fuelTypeName = sharedViewModel.selectedFuelTypeName.value!!,
+                            businessUnitId = sharedViewModel.selectedBusinessUnitId.value!!,
+                            businessUnitName = sharedViewModel.selectedBusinessUnitName.value!!,
+                            warehouseId = sharedViewModel.selectedWarehouseId.value!!,
+                            warehouseName = sharedViewModel.selectedWarehouseName.value!!,
+                            stock = sharedViewModel.stock.value!!,
+                            vehicleName = sharedViewModel.selectedVehicleName.value!!,
+//                            vehicleNumber = sharedViewModel.selectedVehicleNumber.value,
+                            standardConsumption = sharedViewModel.standardConsumption.value!!,
+                            previousReading = sharedViewModel.previousReading.value!!,
+                            previousIssueDate = sharedViewModel.previousIssueDate.value!!,
+                            meterStatus = sharedViewModel.meterStatusString.value!!,
+                            currentReading = sharedViewModel.currentReading.value!!,
+                            entryBy = sharedViewModel.entryBy.value,
+                            issueNo = sharedViewModel.issueNo.value,
+                            issueDate = sharedViewModel.issueDate.value
+                        )
+                    )
+
+                    Log.d(TAG, "VehicleImageCaptureScreen: ${sharedViewModel.formState.value}")
+
+                    /*Toast.makeText(context, "Saved Successfully!", Toast.LENGTH_SHORT).show()
                     navController.navigate(Route.FUEL_ISSUE_VIEW) {
                         popUpTo(Route.VEHICLE_ALLOCATION) { inclusive = true }
-                    }
+                    }*/
                 },
-                modifier = Modifier.fillMaxWidth().height(52.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(52.dp)
             ) {
                 Icon(Icons.Default.Save, contentDescription = null)
                 Spacer(Modifier.width(8.dp))

@@ -1,5 +1,6 @@
 package com.example.mvdugargroup.AppUi
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,6 +75,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
@@ -93,6 +95,7 @@ fun FuelIssueViewScreen(
     sharedViewModel: SharedViewModel = viewModel()
 ) {
 
+    val context = LocalContext.current
     LaunchedEffect(Unit) {
         sharedViewModel.fetchFuelTypes()
     }
@@ -146,11 +149,12 @@ fun FuelIssueViewScreen(
         "LMVMBCA005"
     )*/
 
-    val entries by sharedViewModel.existingFuelEntries.observeAsState()
-    var entriesList = listOf(entries)
+    val entriesList by sharedViewModel.existingFuelEntries.observeAsState(emptyList())
+//    val entriesList = listOf(entries)
 
 
-    val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+    val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+//    val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
 //    val searchResults = remember { mutableStateListOf<FuelIssueRequest>() }
 
     LaunchedEffect(fuelTypesName, businessUnitName) {
@@ -187,9 +191,7 @@ fun FuelIssueViewScreen(
                 navigationIcon = {
                     IconButton(onClick = {
                         navController?.popBackStack()
-                        navController?.navigate(Route.MODULE_LIST)
-//                        navController?.popBackStack(Route.VEHICLE_IMAGE_CAPTURE,inclusive = false)
-//                        navController?.navigate(Route.VEHICLE_IMAGE_CAPTURE)
+//                        navController?.navigate(Route.MODULE_LIST)
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
@@ -220,7 +222,7 @@ fun FuelIssueViewScreen(
                 .padding(paddingValues)
                 .padding(16.dp)
         ) {
-            if (entriesList.isNotEmpty() && entriesList[0]?.tranId != null) {
+            if (entriesList?.isNotEmpty() == true) {
                 Text(
                     "Search Results",
                     fontWeight = FontWeight.Bold,
@@ -228,72 +230,14 @@ fun FuelIssueViewScreen(
                     color = Color(0xFF006666) // Teal
                 )
                 Spacer(Modifier.height(8.dp))
-
-                LazyColumn(
-                    modifier = Modifier.fillMaxSize(),
-                    contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    itemsIndexed(entriesList) { index, item ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth(),
-                            shape = RoundedCornerShape(16.dp),
-                            colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                            elevation = CardDefaults.cardElevation(4.dp),
-                            onClick = {
-                                selectedItem = item
-                            }
-                        ) {
-                            Column(
-                                modifier = Modifier
-                                    .padding(16.dp)
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.LocalGasStation,
-                                        contentDescription = null,
-                                        tint = Color(0xFF006666),
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                    Spacer(Modifier.width(8.dp))
-                                    Text(
-                                        "Issue No: ${item?.tranId}",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 16.sp,
-                                        color = Color(0xFF004D4D)
-                                    )
-
-                                    Spacer(modifier = Modifier.weight(1f))
-                                    IconButton(
-                                        onClick = {
-                                            itemToDelete = item
-                                        },
-                                        modifier = Modifier.size(24.dp)
-                                    ) {
-                                        Icon(
-                                            imageVector = Icons.Default.Delete,
-                                            contentDescription = "Delete",
-                                            tint = Color(0xFF006666),
-                                            modifier = Modifier.size(20.dp)
-                                        )
-                                    }
-                                }
-
-                                Spacer(Modifier.height(8.dp))
-
-                                InfoRow(label = "Fuel Type", value = item?.itemType ?: "")
-                                InfoRow(
-                                    label = "Issue Date",
-                                    value = item?.issueDate.toString()/*.format(dateFormatter)*/
-                                )
-                                InfoRow(label = "Business Unit", value = item?.buDesc ?: "")
-                                InfoRow(label = "Warehouse", value = item?.whDesc.toString() ?: "")
-                                InfoRow(label = "Vehicle", value = item?.vehicleName ?: "")
-                            }
-                        }
+                FuelIssueListScreen(entriesList ?: emptyList(), onDelete = { item ->
+                    if (item.canDelete != 0) {
+                        itemToDelete = item
                     }
-                }
+
+                }, onSelect = { item ->
+                    selectedItem = item
+                })
                 if (itemToDelete != null) {
                     DeleteConfirmationDialog(
                         itemName = "Issue No: ${itemToDelete!!.tranId}",
@@ -334,11 +278,6 @@ fun FuelIssueViewScreen(
                 ) {
                     Text("Filters", fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(16.dp))
-
-
-
-
-
                     DropdownField(
                         label = "Fuel Type",
                         value = selectedFuelType,
@@ -558,6 +497,120 @@ fun FuelIssueViewScreen(
             }
         }
         LoaderDialog(isShowing = isLoading)
+    }
+}
+
+@Composable
+fun FuelIssueListScreen(
+    entriesList: List<FuelExistingEntry>,   // from API
+    onDelete: (FuelExistingEntry) -> Unit,
+    onSelect: (FuelExistingEntry) -> Unit
+) {
+    val context = LocalContext.current
+    var itemToDelete by remember { mutableStateOf<FuelExistingEntry?>(null) }
+
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(vertical = 8.dp, horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        items(
+            count = entriesList.size,
+            key = { entriesList[it].tranId } // stable key
+        ) { index ->
+            val item = entriesList[index]
+
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                elevation = CardDefaults.cardElevation(4.dp),
+                onClick = { onSelect(item) }
+            ) {
+                Column(modifier = Modifier.padding(16.dp)) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.LocalGasStation,
+                            contentDescription = null,
+                            tint = Color(0xFF006666),
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            "Issue No: ${item.requestNo}",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF004D4D)
+                        )
+
+                        Spacer(modifier = Modifier.weight(1f))
+                        IconButton(
+                            onClick = {
+                                if (item.canDelete != 0) {
+                                    itemToDelete = item
+                                    onDelete(item)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        "This Entry cannot be deleted!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            },
+                            modifier = Modifier.size(24.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete",
+                                tint = Color(0xFF006666),
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(Modifier.height(8.dp))
+                    InfoRow(label = "Transaction Id", value = item.tranId.toString())
+                    InfoRow(label = "Fuel Type", value = item.itemType ?: "")
+                    InfoRow(label = "Issue Date", value = item.issueDate ?: "")
+                    InfoRow(label = "Business Unit", value = item.buDesc ?: "")
+                    InfoRow(label = "Warehouse", value = item.whDesc ?: "")
+                    InfoRow(label = "Vehicle", value = item.vehicleName ?: "")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun FuelIssueHistoryScreen(historyList: List<FuelExistingEntry>) {
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        items(historyList.size) { index ->
+            val history = historyList[index]
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(modifier = Modifier.padding(12.dp)) {
+                    Text("Tran ID: ${history.tranId}", fontWeight = FontWeight.Bold)
+                    Text("Vehicle: ${history.vehicleName}")
+                    Text("Fuel: ${history.itemType}")
+                    Text("Quantity: ${history.quanity} L")
+                    Text("Standard Qty: ${history.standardQty}")
+                    Text("Meter Status: ${history.meterStatus}")
+                    Text("Prev Reading: ${history.prevReading}")
+                    Text("Curr Reading: ${history.current_Reading}")
+                    Text("Date: ${history.issueDate.take(10)}") // only YYYY-MM-DD
+                }
+            }
+        }
     }
 }
 

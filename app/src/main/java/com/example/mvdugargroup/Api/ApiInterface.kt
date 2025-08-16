@@ -87,6 +87,6 @@ interface ApiInterface {
         @Part("PrevReading") prevReading: RequestBody,
         @Part("MeterStatus") meterStatus: RequestBody,
         @Part file: MultipartBody.Part
-    ): Response<ResponseBody>
+    ): Response<ApiResponse>
 
 }

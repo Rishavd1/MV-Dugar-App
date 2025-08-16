@@ -110,34 +110,35 @@ data class FuelIssueRequest(
 data class FuelExistingEntryResponse(
     val statusCode: Int,
     val isSuccess: Int,
-    val result: FuelExistingEntry
+    val errorMessages : List<String>,
+    val result: List<FuelExistingEntry>
 )
 
 @Serializable
 data class FuelExistingEntry(
-    val tranId: Int,
+    val tranId: Long,
     val itemType: String,
     val itemId: Int,
-    val requestNo: Int,
+    val requestNo: String,
     val issueDate: String,
     val buId: Int,
     val buDesc: String,
     val whId: Int,
-    val whDesc: Int,
-    val assetId: Int,
+    val whDesc: String,
+    val assetId: Long,
     val costCenter: Int,
     val vehicleCode: String,
     val vehicleName: String,
-    val quanity: Int,
-    val standardQty: Int,
-    val stock: Int,
-    val read_Unit: Int,
-    val standard_Cons: Int,
-    val standard_ConsT: Int,
-    val prevReading: Int,
+    val quanity: Double,
+    val standardQty: Double,
+    val stock: Double,
+    val read_Unit: String,
+    val standard_Cons: Double,
+    val standard_ConsT: String,
+    val prevReading: Double,
     val prevIssueDate: String,
     val meterStatus: String,
-    val current_Reading: Int,
+    val current_Reading: Double,
     val remarks: String,
     val entryBy: String,
     val entryDate: String,
@@ -183,4 +184,22 @@ data class PrevReadingResult(
     val diff_Perc: Int,
     val diff_Reading: Int
 )
+
+@Serializable
+data class ApiResponse(
+    val statusCode: Int,
+    val isSuccess: Int,
+    val errorMessages: List<String>,
+    val result: ResultData
+)
+
+@Serializable
+data class ResultData(
+    val id: Int,
+    val userName: String,
+    val name: String,
+    val status: Int,
+    val message: String
+)
+
 

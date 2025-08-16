@@ -12,6 +12,7 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
+import com.example.mvdugargroup.Api.ApiResponse
 import com.example.mvdugargroup.Api.BusinessUnit
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
@@ -34,6 +35,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.json.Json
 import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -374,9 +376,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     }
 
 
-
-    private val _existingFuelEntries = MutableLiveData<FuelExistingEntry?>()
-    val existingFuelEntries: LiveData<FuelExistingEntry?> = _existingFuelEntries
+    private val _existingFuelEntries = MutableLiveData<List<FuelExistingEntry>?>()
+    val existingFuelEntries: LiveData<List<FuelExistingEntry>?> = _existingFuelEntries
 
     fun fetchExistingEntries(fromDate: String, toDate: String) {
         viewModelScope.launch {
@@ -398,13 +399,16 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     _existingFuelEntries.value = null
                     _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                    Log.e("ExistingEntries", "Code: ${response.code()}, Message: ${response.message()}")
+                    Log.e(
+                        "ExistingEntries",
+                        "Code: ${response.code()}, Message: ${response.message()}"
+                    )
                 }
 
             } catch (e: Exception) {
                 _existingFuelEntries.value = null
                 _errorMessage.value = "Fetch failed:Exception ${e.message}}"
-            }finally {
+            } finally {
                 _isLoading.value = false
             }
         }
@@ -414,12 +418,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     private val _vehicleList = MutableLiveData<List<VehicleList>?>()
     val vehicleList: LiveData<List<VehicleList>?> = _vehicleList
 
-    fun fetchVehicleList(fuelTypeId : Int){
+    fun fetchVehicleList(fuelTypeId: Int) {
         viewModelScope.launch {
             // _isLoading.value = true
             _errorMessage.value = null
             try {
-                val response = withContext(Dispatchers.IO){
+                val response = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.fetchVehicleList(fuelTypeId)
                 }
                 if (response.isSuccessful && response.body()?.isSuccess == 1) {
@@ -429,13 +433,16 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 } else {
                     _vehicleList.value = null
                     _errorMessage.value = "Fetch failed: ${response.code()} ${response.message()}"
-                    Log.e("ExistingEntries", "Code: ${response.code()}, Message: ${response.message()}")
+                    Log.e(
+                        "ExistingEntries",
+                        "Code: ${response.code()}, Message: ${response.message()}"
+                    )
                 }
 
-            }catch (e: Exception){
+            } catch (e: Exception) {
                 _vehicleList.value = null
                 _errorMessage.value = "Fetch failed:Exception ${e.message}}"
-            }finally {
+            } finally {
                 _isLoading.value = false
             }
         }
@@ -486,6 +493,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 // Helper to convert string/double to RequestBody
                 fun String.toPlainRequestBody() =
                     this.toRequestBody("text/plain".toMediaTypeOrNull())
+
                 fun Double.toPlainRequestBody() =
                     this.toString().toRequestBody("text/plain".toMediaTypeOrNull())
 
@@ -522,22 +530,38 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 )
 
                 if (response.isSuccessful) {
+                    val responseBody = response.body()
+                    if (responseBody != null && responseBody.isSuccess == 1) {
+                        Toast.makeText(
+                            context,
+                            responseBody.result.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
 
-                    clearFormData()
-
-                    navController.navigate(Route.FUEL_ISSUE_VIEW)
-                    Log.d("TAG", "submitForm: Success -> ${response.body()?.string()}")
-                    Toast.makeText(context, "Data Successfully Saved! ✅", Toast.LENGTH_SHORT).show()
+                        clearFormData()
+                        navController.navigate(Route.FUEL_ISSUE_VIEW)
+                    }
                 } else {
+                    Toast.makeText(
+                        context,
+                        "Failed to submit form: ${response.code()} ${response.message()}",
+                        Toast.LENGTH_SHORT
+                    ).show()
                     Log.e("TAG", "submitForm: Failed -> ${response.code()} ${response.message()}")
                 }
             } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    "Failed to submit form: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
                 Log.e("TAG", "submitForm: Exception -> ${e.message}", e)
-            }finally {
+            } finally {
                 _isLoading.value = false
             }
         }
     }
+
     private fun clearFormData() {
         _formState.value = null
         _imageFile.value = null

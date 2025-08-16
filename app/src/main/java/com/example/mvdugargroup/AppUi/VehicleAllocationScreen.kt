@@ -224,7 +224,8 @@ fun VehicleAllocationScreen(
         sharedViewModel.standardConsumption.value = previousReadingsData?.st_Average
         sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
         sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
-        sharedViewModel.standardConsumptionType.value = previousReadingsData?.unit.toString()
+        sharedViewModel.standardConsumptionType.value = previousReadingsData?.st_AverageT?.split(" ").toString()
+
 
         Text(
             "Meter Status",
@@ -269,8 +270,9 @@ fun VehicleAllocationScreen(
 
         val prevReadingDouble = previousReadingsData?.preV_READING?.toDouble() ?: 0.0
         val currentReadingDouble = currentReading.toDoubleOrNull()
-        val standardComsumption = previousReadingsData?.st_AverageT
+        val standardComsumption = previousReadingsData?.st_AverageT?.trim()
         val standardComsumptionValue = previousReadingsData?.st_Average
+        val standardConsumptionType = previousReadingsData?.unit?.trim()
 
         sharedViewModel.assetId.value = previousReadingsData?.fA_Id.toString()
         sharedViewModel.costCenter.value = previousReadingsData?.cC_Id.toString()
@@ -294,10 +296,10 @@ fun VehicleAllocationScreen(
                             standardQty = "0.0"
                         } else {
                             val diff = when {
-                                standardComsumption?.contains("KM") == true ->
+                                standardConsumptionType?.equals("KM",ignoreCase = true) == true ->
                                     (cr - prevReadingDouble) / (standardComsumptionValue ?: 0.0)
 
-                                standardComsumption?.endsWith("HR") == true ->
+                                standardConsumptionType?.equals("HR",ignoreCase = true) == true ->
                                     (cr - prevReadingDouble) * (standardComsumptionValue ?: 0.0)
 
                                 else -> 0.0

@@ -202,4 +202,27 @@ data class ResultData(
     val message: String
 )
 
+@Serializable
+data class DeleteFuelIssueRequest(
+    val itemType: String,
+    val itemId: Int,
+    val issueDate: String,
+    val buId: Int,
+    val buDesc: String,
+    val whId: Int,
+    val whDesc: String,
+    val assetId: Int,
+    val costCenter: Int,
+    val vehicleName: String,
+    val quantity: Int,
+    val stock: Int,
+    val read_Unit: String,
+    val standard_Cons: Int,
+    val standard_ConsT: String,
+    val prevReading: Int,
+    val prevIssueDate: String,
+    val meterStatus: String,
+    val current_Reading: Int,
+    val entryBy: String
+)
 

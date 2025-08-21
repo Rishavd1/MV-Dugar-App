@@ -2,6 +2,7 @@ package com.example.mvdugargroup.AppUi
 
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -46,7 +47,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
-import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
 import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 import java.time.LocalDate
@@ -57,6 +57,11 @@ import java.util.Locale
 @Composable
 fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewModel = viewModel()) {
 
+    BackHandler {
+        navController.navigate(Route.FUEL_ISSUE_VIEW) {
+            popUpTo(Route.FUEL_ISSUE_VIEW) { inclusive = true }
+        }
+    }
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
@@ -66,7 +71,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
     val fuelTypesName = sharedViewModel.fuelTypes.value?.map { it.itemType }?: emptyList()
     val businessUnitName = sharedViewModel.businessType.value?.map { it.businessUnitDesc }?:emptyList()
     val warehousesName = sharedViewModel.warehouse.value?.map{ it.warehouseDesc}?:emptyList()
-    val stockQuantity by sharedViewModel.stockQuantity.observeAsState()
+    val stock by sharedViewModel.stockQuantity.observeAsState()
 
 
     val isLoading by sharedViewModel.isLoading.collectAsState()
@@ -82,7 +87,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
     var businessUnitExpanded by remember { mutableStateOf(false) }
     var warehouseExpanded by remember { mutableStateOf(false) }
 
-    var stock by remember { mutableStateOf("0.000") }
+//    var stock by remember { mutableStateOf(stockQuantity) }
     val issueDate: String = LocalDate.now()
         .format(DateTimeFormatter.ofPattern("dd-MMM-yyyy", Locale.ENGLISH))
 
@@ -105,9 +110,12 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             }
         }
     }
+    var stockDisplay : String ?= null
     LaunchedEffect(warehousesName) {
         if (warehousesName.isNotEmpty() && selectedWarehouse.isEmpty()) {
             selectedWarehouse = warehousesName[0]
+        }else{
+            selectedWarehouse = ""
         }
 
         val ftId = sharedViewModel.fuelTypes.value
@@ -132,18 +140,21 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             Log.d("TAG", "FuelIssueScreen: ftId=$ftId, buId=$buId, whId=$whId")
         }
     }
+     stockDisplay = if(selectedWarehouse.isEmpty()){
+         ""
+     }else{
+         stock?.stockQuantity?.let {
+             String.format("%.3f", it)
+         } ?: ""
+     }
 
 
-    val stockDisplay = stockQuantity?.stockQuantity?.let {
-        String.format("%.3f", it)
-    } ?: "0.0"
-
-    sharedViewModel.stock.value = stockQuantity?.stockQuantity
+    sharedViewModel.stock.value = stock?.stockQuantity
 
 
-    issueNo = "Issue 1"
+    issueNo = ""
     sharedViewModel.issueNo.value = issueNo
-    Log.d(TAG, "FuelIssueScreen: Stock ${stockQuantity?.stockQuantity}")
+    Log.d(TAG, "FuelIssueScreen: Stock ${stock?.stockQuantity}")
     Log.d(TAG, "FuelIssueScreen: ViewModelStock ${sharedViewModel.stock.value}")
 
     Column(
@@ -162,7 +173,11 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController.popBackStack() }
+                onClick = {
+                    navController.navigate(Route.FUEL_ISSUE_VIEW) {
+                        popUpTo(Route.FUEL_ISSUE_VIEW) { inclusive = true }
+                    }
+                }
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -177,10 +192,10 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 modifier = Modifier.weight(1f)
             )
         }
-        Spacer(modifier = Modifier.height(4.dp))
-        ReadOnlyNoFocusField("Issue No",issueNo) //issueNo
+//        Spacer(modifier = Modifier.height(4.dp))
+//        ReadOnlyNoFocusField("Issue No",issueNo) //issueNo
         Spacer(modifier = Modifier.height(12.dp))
-        Spacer(modifier = Modifier.height(4.dp))
+//        Spacer(modifier = Modifier.height(4.dp))
         ReadOnlyNoFocusField("Issue Date",issueDate)
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -340,9 +355,16 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
 
         Button(
             onClick = {
-                navController.navigate(Route.VEHICLE_ALLOCATION){
-                    popUpTo(Route.MODULE_LIST) { inclusive = true }
+                if(selectedFuelType.isNotEmpty() &&
+                    selectedBusinessUnit.isNotEmpty() &&
+                    selectedWarehouse.isNotEmpty()){
+                    navController.navigate(Route.VEHICLE_ALLOCATION){
+                        popUpTo(Route.MODULE_LIST) { inclusive = true }
+                    }
+                }else{
+                    Toast.makeText(context, "Please make the proper selection", Toast.LENGTH_SHORT).show()
                 }
+
             },
             modifier = Modifier
                 .fillMaxWidth()

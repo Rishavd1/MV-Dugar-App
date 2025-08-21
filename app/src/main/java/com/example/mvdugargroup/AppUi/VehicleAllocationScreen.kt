@@ -1,6 +1,7 @@
 package com.example.mvdugargroup.AppUi
 
 import android.util.Log
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -34,6 +35,7 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
@@ -45,6 +47,15 @@ fun VehicleAllocationScreen(
     sharedViewModel: SharedViewModel = viewModel()
 ) {
 
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+
+    BackHandler {
+
+        navController.navigate(Route.FUEL_ISSUE) {
+            popUpTo(Route.FUEL_ISSUE) { inclusive = true }
+        }
+
+    }
 
     val scrollState = rememberScrollState()
     val isLoading by sharedViewModel.isLoading.collectAsState()
@@ -54,15 +65,6 @@ fun VehicleAllocationScreen(
 
     val vehicleNames =
         listOf("Select Vehicle") + (vehicleList?.map { it.description } ?: emptyList())
-
-    /* val vehicleList = listOf(
-         "LMVMBCA001",
-         "LMVMBCA002",
-         "LMVMBCA003",
-         "LMVMBCA004",
-         "LMVMBCA005",
-     )*/
-
 
     var selectedVehicle by remember { mutableStateOf("") }
     var showDropdown by remember { mutableStateOf(false) }
@@ -77,8 +79,8 @@ fun VehicleAllocationScreen(
     var currentReading by remember { mutableStateOf("") }
     var currentReadingError by remember { mutableStateOf("") }
 
-    var issueQty by remember { mutableStateOf("0.0") }
-    var standardQty by remember { mutableStateOf("0.0") }
+    var issueQty by remember { mutableStateOf("") }
+    var standardQty by remember { mutableStateOf("") }
 
     var remarks by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -103,6 +105,7 @@ fun VehicleAllocationScreen(
 
         }
     }
+
 
 
     Column(
@@ -160,47 +163,6 @@ fun VehicleAllocationScreen(
             }
         )
 
-        /*Box(modifier = Modifier.fillMaxWidth()) {
-            OutlinedTextField(
-                value = selectedVehicle,
-                onValueChange = {
-                    searchText = it
-                    vehicleExpanded = true
-                },
-                modifier = Modifier
-                    .fillMaxWidth(),
-                trailingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.ArrowDropDown,
-                        contentDescription = null,
-                        modifier = Modifier.clickable { vehicleExpanded = true }
-                    )
-                },
-                placeholder = { Text("Select Vehicle") },
-                singleLine = true,
-                shape = RoundedCornerShape(12.dp)
-            )
-
-            DropdownMenu(
-                expanded = vehicleExpanded,
-                onDismissRequest = { vehicleExpanded = false },
-                modifier = Modifier
-                    .fillMaxWidth()
-            ) {
-                vehicleNames
-                    .filter { it.contains(searchText, ignoreCase = true) }
-                    .forEach { item ->
-                        DropdownMenuItem(
-                            text = { Text(item) },
-                            onClick = {
-                                selectedVehicle = item
-                                searchText = item
-                                vehicleExpanded = false
-                            }
-                        )
-                    }
-            }
-        }*/
 
         Spacer(modifier = Modifier.height(16.dp))
 
@@ -208,23 +170,23 @@ fun VehicleAllocationScreen(
 
         ReadOnlyNoFocusFieldVeh(
             label = "Standard Consumption",
-            value = previousReadingsData?.st_AverageT.toString()
+            value = previousReadingsData?.st_AverageT ?: ""
         )
         Spacer(modifier = Modifier.height(12.dp))
         ReadOnlyNoFocusFieldVeh(
             label = "Previous Reading",
-            value = previousReadingsData?.preV_READING.toString()
+            value = previousReadingsData?.preV_READING?.toString() ?: ""
         )
         Spacer(modifier = Modifier.height(12.dp))
         ReadOnlyNoFocusFieldVeh(
             label = "Previous Issue Date",
-            value = previousReadingsData?.preV_DATE.toString()
+            value = previousReadingsData?.preV_DATE ?: ""
         )
         Spacer(modifier = Modifier.height(12.dp))
         sharedViewModel.standardConsumption.value = previousReadingsData?.st_Average
         sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
         sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
-        sharedViewModel.standardConsumptionType.value = previousReadingsData?.st_AverageT?.split(" ").toString()
+        sharedViewModel.standardConsumptionType.value = previousReadingsData?.st_AverageT?.split(" ")[1].toString()
 
 
         Text(
@@ -396,6 +358,11 @@ fun VehicleAllocationScreen(
 
                 generalErrorMessage = "" // reset before validation
                 // Validation 1: Current Reading
+                if(selectedVehicle.isEmpty()){
+                    generalErrorMessage =
+                        "Please select vehicle."
+                    return@Button
+                }
                 if (selectedMeterStatus.contains("METER WORKING", ignoreCase = true)) {
                     val cr = currentReading.toDoubleOrNull()
                     if (cr == null || cr <= prevReadingDouble) {
@@ -437,7 +404,7 @@ fun VehicleAllocationScreen(
             )
         }
         LoaderDialog(isShowing = isLoading)
-        Spacer(modifier = Modifier.height(25.dp))
+        Spacer(modifier = Modifier.height(35.dp))
 
     }
 }
@@ -491,7 +458,7 @@ fun VehicleAutoCompleteTextView(
         )
 
         val filteredList = vehicleNames.filter {
-            it.startsWith(searchText, ignoreCase = true)
+            it.contains(searchText, ignoreCase = true)
         }
 
         ExposedDropdownMenu(

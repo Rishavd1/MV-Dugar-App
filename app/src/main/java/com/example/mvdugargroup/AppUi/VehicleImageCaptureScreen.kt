@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CameraAlt
-import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -48,6 +47,7 @@ import com.example.mvdugargroup.PermissionDeniedDialog
 import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
@@ -73,6 +73,13 @@ fun VehicleImageCaptureScreen(
     navController: NavController,
     sharedViewModel: SharedViewModel = viewModel()
 ) {
+
+    BackHandler {
+        navController.navigate(Route.VEHICLE_ALLOCATION) {
+            popUpTo(Route.VEHICLE_ALLOCATION) { inclusive = true }
+        }
+    }
+
     val context = LocalContext.current
 
     val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU)
@@ -81,8 +88,8 @@ fun VehicleImageCaptureScreen(
         Manifest.permission.READ_EXTERNAL_STORAGE
 
     val requiredPermissions = listOf(
-        Manifest.permission.CAMERA,
-        storagePermission
+        Manifest.permission.CAMERA
+        , storagePermission
     )
 
     var permissionGranted by remember { mutableStateOf(false) }
@@ -176,7 +183,13 @@ fun VehicleImageCaptureScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             IconButton(
-                onClick = { navController.navigate(Route.VEHICLE_ALLOCATION) }
+                onClick = {
+                    navController.navigate(Route.VEHICLE_ALLOCATION) {
+                        popUpTo(Route.VEHICLE_ALLOCATION) { inclusive = true }
+                    }
+//                    navController.navigate(Route.VEHICLE_ALLOCATION)
+                }
+
             ) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
@@ -227,6 +240,7 @@ fun VehicleImageCaptureScreen(
         }
 
 
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -248,17 +262,16 @@ fun VehicleImageCaptureScreen(
                 Spacer(Modifier.width(8.dp))
                 Text("Capture Image")
             }
-
-            Button(
-                onClick = { launcherGallery.launch("image/*") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(52.dp)
-            ) {
-                Icon(Icons.Default.Image, contentDescription = null)
-                Spacer(Modifier.width(8.dp))
-                Text("Choose from Gallery")
-            }
+            //        Button(
+//            onClick = { launcherGallery.launch("image/*") },
+//            modifier = Modifier
+//                .fillMaxWidth()
+//                .height(52.dp)
+//        ) {
+//            Icon(Icons.Default.Image, contentDescription = null)
+//            Spacer(Modifier.width(8.dp))
+//            Text("Choose from Gallery")
+//        }
             val TAG = "VehicleImageCaptureScreen"
             Button(
                 onClick = {
@@ -294,7 +307,7 @@ fun VehicleImageCaptureScreen(
 
                     sharedViewModel.updateFormData(formData)
 
-                    Log.d(TAG, "VehicleImageCaptureScreen: $formData")
+                    Log.d("TAG", "VehicleImageCaptureScreen: $formData")
 
                     sharedViewModel.submitForm(context,navController)
 

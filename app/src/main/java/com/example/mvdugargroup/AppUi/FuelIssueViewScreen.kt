@@ -1,6 +1,7 @@
 package com.example.mvdugargroup.AppUi
 
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -18,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -27,11 +27,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.LocalGasStation
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DatePicker
@@ -77,6 +79,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
+import com.example.mvdugargroup.Api.DeleteFuelIssueRequest
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Route
@@ -95,6 +98,11 @@ fun FuelIssueViewScreen(
     sharedViewModel: SharedViewModel = viewModel()
 ) {
 
+    BackHandler {
+        navController?.navigate(Route.MODULE_LIST) {
+            popUpTo(Route.MODULE_LIST) { inclusive = true }
+        }
+    }
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         sharedViewModel.fetchFuelTypes()
@@ -141,21 +149,12 @@ fun FuelIssueViewScreen(
     var showFromDatePicker by remember { mutableStateOf(false) }
     var showToDatePicker by remember { mutableStateOf(false) }
 
-    // Dropdown items
-    /*val vehicleList = listOf(
-        "LMVMBCA001",
-        "LMVMBCA002",
-        "LMVMBCA003",
-        "LMVMBCA005"
-    )*/
+
 
     val entriesList by sharedViewModel.existingFuelEntries.observeAsState(emptyList())
-//    val entriesList = listOf(entries)
 
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-//    val dateFormatter = DateTimeFormatter.ofPattern("dd-MM-yyyy")
-//    val searchResults = remember { mutableStateListOf<FuelIssueRequest>() }
 
     LaunchedEffect(fuelTypesName, businessUnitName) {
         if (fuelTypesName.isNotEmpty()) {
@@ -177,6 +176,18 @@ fun FuelIssueViewScreen(
         }
     }
 
+    LaunchedEffect(null) {
+        val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+        val today = LocalDate.now().format(dateFormatter)
+
+        sharedViewModel.fetchExistingEntries(
+            today, // startDate
+            today,
+            null,null,null,null// endDate
+        )
+    }
+
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -190,8 +201,10 @@ fun FuelIssueViewScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = {
-                        navController?.popBackStack()
-//                        navController?.navigate(Route.MODULE_LIST)
+                        navController?.navigate(Route.MODULE_LIST) {
+                            popUpTo(Route.MODULE_LIST) { inclusive = true }
+                        }
+//                        navController?.popBackStack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }
@@ -227,7 +240,7 @@ fun FuelIssueViewScreen(
                     "Search Results",
                     fontWeight = FontWeight.Bold,
                     fontSize = 18.sp,
-                    color = Color(0xFF006666) // Teal
+                    color = Color(0xFF006666)
                 )
                 Spacer(Modifier.height(8.dp))
                 FuelIssueListScreen(entriesList ?: emptyList(), onDelete = { item ->
@@ -242,7 +255,7 @@ fun FuelIssueViewScreen(
                     DeleteConfirmationDialog(
                         itemName = "Issue No: ${itemToDelete!!.tranId}",
                         onConfirm = {
-//                            entriesList.remove(itemToDelete)
+                            sharedViewModel.deleteFuelIssue(context,itemToDelete!!.toDeleteRequest())
                             itemToDelete = null  // Close dialog
                         },
                         onDismiss = {
@@ -301,18 +314,23 @@ fun FuelIssueViewScreen(
 
                         }
                     )
-
-                    DropdownField(
-                        label = "Vehicle",
-                        value = selectedVehicle,
-                        expanded = vehicleExpanded,
-                        items = vehicleNames,
-                        onExpandedChange = { vehicleExpanded = !vehicleExpanded },
-                        onItemSelected = {
-                            selectedVehicle = it
-                            vehicleExpanded = false
-                        }
+                    VehicleAutoCompleteTextViewFilter(
+                        vehicleNames = vehicleNames,
+                        selectedVehicle = selectedVehicle,
+                        onVehicleSelected = { selectedVehicle = it }
                     )
+
+//                    DropdownField(
+//                        label = "Vehicle",
+//                        value = selectedVehicle,
+//                        expanded = vehicleExpanded,
+//                        items = vehicleNames,
+//                        onExpandedChange = { vehicleExpanded = !vehicleExpanded },
+//                        onItemSelected = {
+//                            selectedVehicle = it
+//                            vehicleExpanded = false
+//                        }
+//                    )
 
                     DropdownField(
                         label = "Business Unit",
@@ -481,7 +499,12 @@ fun FuelIssueViewScreen(
 
                                 sharedViewModel.fetchExistingEntries(
                                     startDate.format(dateFormatter),
-                                    endDate.format(dateFormatter)
+                                    endDate.format(dateFormatter),
+                                    selectedFuelType,
+                                    selectedBusinessUnit,
+                                    selectedWarehouse,
+                                    selectedVehicle
+
                                 )
                             },
                             modifier = Modifier.weight(1f)
@@ -498,6 +521,31 @@ fun FuelIssueViewScreen(
         }
         LoaderDialog(isShowing = isLoading)
     }
+}
+
+fun FuelExistingEntry.toDeleteRequest(): DeleteFuelIssueRequest {
+    return DeleteFuelIssueRequest(
+        itemType = this.itemType,
+        itemId = this.itemId,
+        issueDate = this.issueDate,
+        buId = this.buId,
+        buDesc = this.buDesc,
+        whId = this.whId,
+        whDesc = this.whDesc,
+        assetId = this.assetId.toInt(), // careful: was Long → Int
+        costCenter = this.costCenter,
+        vehicleName = this.vehicleName,
+        quantity = this.quanity.toInt(), // careful: was Double → Int
+        stock = this.stock.toInt(),      // Double → Int
+        read_Unit = this.read_Unit,
+        standard_Cons = this.standard_Cons.toInt(), // Double → Int
+        standard_ConsT = this.standard_ConsT,
+        prevReading = this.prevReading.toInt(), // Double → Int
+        prevIssueDate = this.prevIssueDate,
+        meterStatus = this.meterStatus,
+        current_Reading = this.current_Reading.toInt(), // Double → Int
+        entryBy = this.entryBy
+    )
 }
 
 @Composable
@@ -544,7 +592,7 @@ fun FuelIssueListScreen(
                         )
 
                         Spacer(modifier = Modifier.weight(1f))
-                        IconButton(
+                        /*IconButton(
                             onClick = {
                                 if (item.canDelete != 0) {
                                     itemToDelete = item
@@ -565,7 +613,7 @@ fun FuelIssueListScreen(
                                 tint = Color(0xFF006666),
                                 modifier = Modifier.size(20.dp)
                             )
-                        }
+                        }*/
                     }
 
                     Spacer(Modifier.height(8.dp))
@@ -575,45 +623,38 @@ fun FuelIssueListScreen(
                     InfoRow(label = "Business Unit", value = item.buDesc ?: "")
                     InfoRow(label = "Warehouse", value = item.whDesc ?: "")
                     InfoRow(label = "Vehicle", value = item.vehicleName ?: "")
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = {
+                            if (item.canDelete != 0) {
+                                itemToDelete = item
+                                onDelete(item)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    "This Entry cannot be deleted!",
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = Color(0xFF018A8A)
+                        ),
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Delete",
+                            color = Color.White
+                        )
+                    }
+
                 }
             }
         }
     }
 }
-
-@Composable
-fun FuelIssueHistoryScreen(historyList: List<FuelExistingEntry>) {
-    LazyColumn(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(8.dp)
-    ) {
-        items(historyList.size) { index ->
-            val history = historyList[index]
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                shape = RoundedCornerShape(12.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFFF9F9F9)),
-                elevation = CardDefaults.cardElevation(4.dp)
-            ) {
-                Column(modifier = Modifier.padding(12.dp)) {
-                    Text("Tran ID: ${history.tranId}", fontWeight = FontWeight.Bold)
-                    Text("Vehicle: ${history.vehicleName}")
-                    Text("Fuel: ${history.itemType}")
-                    Text("Quantity: ${history.quanity} L")
-                    Text("Standard Qty: ${history.standardQty}")
-                    Text("Meter Status: ${history.meterStatus}")
-                    Text("Prev Reading: ${history.prevReading}")
-                    Text("Curr Reading: ${history.current_Reading}")
-                    Text("Date: ${history.issueDate.take(10)}") // only YYYY-MM-DD
-                }
-            }
-        }
-    }
-}
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -763,6 +804,83 @@ fun FuelIssueDetailDialog(item: FuelExistingEntry, onDismiss: () -> Unit) {
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun VehicleAutoCompleteTextViewFilter(
+    vehicleNames: List<String>,
+    selectedVehicle: String,
+    onVehicleSelected: (String) -> Unit
+) {
+    var searchText by remember { mutableStateOf(selectedVehicle) }
+    var expanded by remember { mutableStateOf(false) }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
+    ) {
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = {
+                searchText = it
+                expanded = true
+            },
+            modifier = Modifier
+                .menuAnchor()
+                .fillMaxWidth(),
+            trailingIcon = {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    // Clear Button
+                    if (searchText.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchText = ""
+                            onVehicleSelected("") // reset selection
+                            expanded = false
+                        }) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear",
+                                tint = Color.Gray
+                            )
+                        }
+                    }
+                    // Default Dropdown Icon
+                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                }
+            },
+            placeholder = { Text("Select Vehicle") },
+            singleLine = true,
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        val filteredList = vehicleNames.filter {
+            it.contains(searchText, ignoreCase = true)
+        }
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            if (filteredList.isEmpty()) {
+                DropdownMenuItem(
+                    text = { Text("No matches found") },
+                    onClick = { expanded = false }
+                )
+            } else {
+                filteredList.forEach { item ->
+                    DropdownMenuItem(
+                        text = { Text(item) },
+                        onClick = {
+                            searchText = item
+                            onVehicleSelected(item)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable

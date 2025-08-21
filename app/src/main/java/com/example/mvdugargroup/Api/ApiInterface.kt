@@ -4,7 +4,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody
 import okhttp3.ResponseBody
 import retrofit2.Response
+import retrofit2.http.Body
 import retrofit2.http.GET
+import retrofit2.http.Headers
 import retrofit2.http.Multipart
 import retrofit2.http.POST
 import retrofit2.http.Part
@@ -41,10 +43,19 @@ interface ApiInterface {
     suspend fun fetchMeterStatus(): Response<MeterStatusResponse>
 
 
-    @GET("FuelIssueRequest/api/FuelIssueRequest/GetExistingEntrySearch")
-    suspend fun fetchExistingEntry(@Query("From_Date") fromDate: String,
-                                   @Query("To_Date") toDate: String): Response<FuelExistingEntryResponse>
+//    @GET("FuelIssueRequest/api/FuelIssueRequest/GetExistingEntrySearch")
+//    suspend fun fetchExistingEntry(@Query("From_Date") fromDate: String,
+//                                   @Query("To_Date") toDate: String): Response<FuelExistingEntryResponse>
 
+    @GET("FuelIssueRequest/api/FuelIssueRequest/GetExistingEntrySearch")
+    suspend fun fetchExistingEntry(
+        @Query("From_Date") fromDate: String,
+        @Query("To_Date") toDate: String,
+        @Query("ItemType") itemType: String? = null,
+        @Query("BUDesc") buDesc: String? = null,
+        @Query("WHDesc") whDesc: String? = null,
+        @Query("VehicleName") vehicleName: String? = null
+    ): Response<FuelExistingEntryResponse>
     @GET("FuelIssueRequest/api/FuelIssueRequest/GetVehicleSearch")
     suspend fun fetchVehicleList(@Query("ItemId") fuelTypeId: Int) : Response<VehicleListResponse>
 
@@ -87,6 +98,12 @@ interface ApiInterface {
         @Part("PrevReading") prevReading: RequestBody,
         @Part("MeterStatus") meterStatus: RequestBody,
         @Part file: MultipartBody.Part
+    ): Response<ApiResponse>
+
+    @Headers("Content-Type: application/json")
+    @POST("FuelIssueRequest/api/FuelIssueRequest/Delete")
+    suspend fun deleteFuelIssue(
+        @Body request: DeleteFuelIssueRequest
     ): Response<ApiResponse>
 
 }

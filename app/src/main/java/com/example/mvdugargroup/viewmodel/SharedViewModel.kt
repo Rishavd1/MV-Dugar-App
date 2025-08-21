@@ -14,6 +14,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import com.example.mvdugargroup.Api.ApiResponse
 import com.example.mvdugargroup.Api.BusinessUnit
+import com.example.mvdugargroup.Api.DeleteFuelIssueRequest
 import com.example.mvdugargroup.Api.FuelExistingEntry
 import com.example.mvdugargroup.Api.FuelIssueRequest
 import com.example.mvdugargroup.Api.FuelType
@@ -41,6 +42,7 @@ import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.json.JSONObject
 import retrofit2.Response
 import java.io.File
 import kotlin.toString
@@ -379,7 +381,14 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
     private val _existingFuelEntries = MutableLiveData<List<FuelExistingEntry>?>()
     val existingFuelEntries: LiveData<List<FuelExistingEntry>?> = _existingFuelEntries
 
-    fun fetchExistingEntries(fromDate: String, toDate: String) {
+    fun fetchExistingEntries(
+        fromDate: String,
+        toDate: String,
+        itemType: String ?=null,
+        buDesc: String?=null,
+        whDesc: String?=null,
+        vehicleName: String?=null
+    ) {
         viewModelScope.launch {
             _isLoading.value = true
             _errorMessage.value = null
@@ -388,7 +397,11 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     withContext(Dispatchers.IO) {
                         RetrofitInstance.api.fetchExistingEntry(
                             fromDate,
-                            toDate
+                            toDate,
+                            itemType,
+                            buDesc,
+                            whDesc,
+                            vehicleName
                         )
                     }
 
@@ -540,19 +553,50 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
                         clearFormData()
                         navController.navigate(Route.FUEL_ISSUE_VIEW)
+                    }else{
+                        Toast.makeText(
+                            context,
+                            "Failed to submit form:${response.body()?.errorMessages?.joinToString { "," }} \n${response.code()} ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
                     }
                 } else {
+                    val errorJson = response.errorBody()?.string() // get raw JSON string
+                    var errorMessage = "Unknown error"
+
+                    errorJson?.let {
+                        try {
+                            val jsonObject = JSONObject(it)
+                            if (jsonObject.has("errors")) {
+                                val errors = jsonObject.getJSONObject("errors")
+                                val sb = StringBuilder()
+                                errors.keys().forEach { key ->
+                                    val messages = errors.getJSONArray(key)
+                                    for (i in 0 until messages.length()) {
+                                        sb.append("${messages[i]}\n")
+                                    }
+                                }
+                                errorMessage = sb.toString()
+                            } else if (jsonObject.has("title")) {
+                                errorMessage = jsonObject.getString("title")
+                            }
+                        } catch (e: Exception) {
+                            errorMessage = "Failed to parse error: ${e.message}"
+                        }
+                    }
+
                     Toast.makeText(
                         context,
-                        "Failed to submit form: ${response.code()} ${response.message()}",
-                        Toast.LENGTH_SHORT
+                        "Failed: $errorMessage",
+                        Toast.LENGTH_LONG
                     ).show()
-                    Log.e("TAG", "submitForm: Failed -> ${response.code()} ${response.message()}")
-                }
+
+                    Log.e("TAG", "submitForm: Failed -> $errorMessage")}
             } catch (e: Exception) {
                 Toast.makeText(
                     context,
-                    "Failed to submit form: ${e.message}",
+                    "Failed to submit form Catch: ${e.message}",
                     Toast.LENGTH_SHORT
                 ).show()
                 Log.e("TAG", "submitForm: Exception -> ${e.message}", e)
@@ -574,7 +618,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         previousIssueDate.value = ""
         meterStatusString.value = ""
         currentReading.value = 0.0
-        entryBy.value = ""
         issueNo.value = ""
         issueDate.value = ""
         assetId.value = ""
@@ -583,4 +626,48 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         standardConsumptionType.value = ""
     }
 
+    private val _deleteResponse = MutableLiveData<String?>()
+    val deleteResponse: LiveData<String?> = _deleteResponse
+
+    fun deleteFuelIssue(context: Context,request: DeleteFuelIssueRequest) {
+        viewModelScope.launch {
+            try {
+                val response = RetrofitInstance.api.deleteFuelIssue(request)
+                if (response.isSuccessful) {
+                    val responseBody = response.body()
+                    if (responseBody != null && responseBody.isSuccess == 1) {
+                        Toast.makeText(
+                            context,
+                            responseBody.result.message,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                       // _deleteResponse.postValue("Record Successfully Deleted!")
+                    }else{
+                        Toast.makeText(
+                            context,
+                            "Failed to delete : ${response.code()} ${response.message()}",
+                            Toast.LENGTH_SHORT
+                        ).show()
+
+                    }
+
+
+                } else {
+                    Toast.makeText(
+                        context,
+                        "Error: "+response.code()+" "+response.message(),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    //_deleteResponse.postValue("Error: ${response.message()}")
+                }
+            } catch (e: Exception) {
+                Toast.makeText(
+                    context,
+                    "Error: "+e.localizedMessage,
+                    Toast.LENGTH_SHORT
+                ).show()
+                //_deleteResponse.postValue(e.localizedMessage ?: "Unknown error")
+            }
+        }
+    }
 }

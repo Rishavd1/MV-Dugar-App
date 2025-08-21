@@ -1,6 +1,8 @@
 package com.example.mvdugargroup.AppUi
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,8 +15,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -60,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.mvdugargroup.viewmodel.SharedViewModel
 
@@ -173,12 +174,16 @@ import com.example.mvdugargroup.viewmodel.SharedViewModel
         }
     }
 }*/
-
-
 fun ModuleListScreen(
     navController: NavController,
     sharedViewModel: SharedViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    BackHandler {
+        activity?.finishAffinity()
+    }
+
     val allModules = listOf(
         "MATERIAL" to Icons.Default.Inventory,
         "CONSTRUCTION" to Icons.Default.Engineering,
@@ -188,10 +193,8 @@ fun ModuleListScreen(
     )
 
     var expanded by remember { mutableStateOf(false) }
-
     val favoriteModules by sharedViewModel.favoriteModules.collectAsState()
     val selectedModule by sharedViewModel.selectedModule.collectAsState()
-
     val userDetails by sharedViewModel.userDetails.collectAsState()
 
 
@@ -224,10 +227,7 @@ fun ModuleListScreen(
             } else {
                 CircularProgressIndicator()
             }
-
-
             Spacer(modifier = Modifier.height(8.dp))
-
             Text(
                 text = "MENU SECTION",
                 fontWeight = FontWeight.Bold,
@@ -236,26 +236,33 @@ fun ModuleListScreen(
             )
 
             Spacer(modifier = Modifier.height(32.dp))
-
-            // Spinner-style dropdown
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 25.dp)
             ) {
                 Column {
-                    Box(
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
                             .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
                             .clickable { expanded = true }
-                            .padding(16.dp)
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "Select Module",
-                            color = if (selectedModule != null) Color.Black else Color.Gray
+                            text = selectedModule ?: "Select Module",
+                            color = if (selectedModule != null) Color.Black else Color.Gray,
+                        )
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown Arrow",
+                            tint = Color.Gray
                         )
                     }
+
                     Box(
                         modifier = Modifier.wrapContentWidth(),
                         contentAlignment = Alignment.Center
@@ -306,12 +313,35 @@ fun ModuleListScreen(
                             }
                         }
                     }
+                    if (favoriteModules.isEmpty()) {
+                        Text(
+                            text = "Touch on the Dropdown, then click on the Heart to make any Module Favourite.",
+                            fontSize = 14.sp,
+                            color = Color.Red,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }else{
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "\uD83D\uDC47 Touch on the Module Card to continue.",
+                                fontSize = 16.sp,
+                                color =Color(0xFF018A8A),
+                               // color = Color(0xFF4CAF50), // green highlight
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
 
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
             // Grid of favorited modules
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
@@ -379,6 +409,8 @@ fun ModuleListScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+
+
         }
     }
 }

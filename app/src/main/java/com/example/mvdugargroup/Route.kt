@@ -8,4 +8,5 @@ object Route {
     const val VEHICLE_IMAGE_CAPTURE = "vehicleImageCapture"
 
     const val VEHICLE_IMAGE_PREVIEW = "previewImage"
+    const val FUEL_ISSUE_VIEW = "fuelIssueView"
 }

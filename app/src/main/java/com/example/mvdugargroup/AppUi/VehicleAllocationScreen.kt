@@ -356,8 +356,8 @@ fun VehicleAllocationScreen(
                 .fillMaxWidth()
                 .height(52.dp), onClick = {
 
-                generalErrorMessage = "" // reset before validation
-                // Validation 1: Current Reading
+                generalErrorMessage = ""
+
                 if(selectedVehicle.isEmpty()){
                     generalErrorMessage =
                         "Please select vehicle."
@@ -372,14 +372,14 @@ fun VehicleAllocationScreen(
                     }
                 }
 
-                // Validation 2: Remarks when Issue Qty exceeds Standard Qty
+
                 if (remarksRequired && remarks.isBlank()) {
                     generalErrorMessage =
                         "Issue Qty greater than Standard Qty by $readingPercentage% and for that remarks mandatory."
                     return@Button
                 }
 
-                // Validation 3: Issue Qty must be > 0
+
                 if ((issueQty.toDoubleOrNull() ?: 0.0) <= 0) {
                     generalErrorMessage = "Issue Quantity must be greater than 0"
                     return@Button
@@ -448,7 +448,7 @@ fun VehicleAutoCompleteTextView(
                             )
                         }
                     }
-                    // Default Dropdown Icon
+
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             },

@@ -140,7 +140,7 @@ fun FuelIssueViewScreen(
     var selectedVehicle by remember { mutableStateOf("") }
     var selectedBusinessUnit by remember { mutableStateOf("") }
     var selectedWarehouse by remember { mutableStateOf("") }
-    var startDate by remember { mutableStateOf(LocalDate.now().minusMonths(1)) }
+    var startDate by remember { mutableStateOf(LocalDate.now()) }
     var endDate by remember { mutableStateOf(LocalDate.now()) }
 
     var itemToDelete by remember { mutableStateOf<FuelExistingEntry?>(null) }
@@ -155,6 +155,8 @@ fun FuelIssueViewScreen(
 
 
     val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
+    val deleteSuccess by sharedViewModel.deleteSuccess.observeAsState()
 
     LaunchedEffect(fuelTypesName, businessUnitName) {
         if (fuelTypesName.isNotEmpty()) {
@@ -187,6 +189,18 @@ fun FuelIssueViewScreen(
         )
     }
 
+    LaunchedEffect(deleteSuccess) {
+        if (deleteSuccess == true) {
+            sharedViewModel.fetchExistingEntries(
+                startDate.format(dateFormatter),
+                endDate.format(dateFormatter),
+                if (selectedFuelType.startsWith("select", ignoreCase = true)) null else selectedFuelType,
+                if (selectedBusinessUnit.startsWith("select", ignoreCase = true)) null else selectedBusinessUnit,
+                if (selectedWarehouse.startsWith("select", ignoreCase = true)) null else selectedWarehouse,
+                if (selectedVehicle.startsWith("select", ignoreCase = true)) null else selectedVehicle
+            )
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -253,13 +267,13 @@ fun FuelIssueViewScreen(
                 })
                 if (itemToDelete != null) {
                     DeleteConfirmationDialog(
-                        itemName = "Issue No: ${itemToDelete!!.tranId}",
+                        itemName = "Issue No: ${itemToDelete!!.requestNo}",
                         onConfirm = {
                             sharedViewModel.deleteFuelIssue(context,itemToDelete!!.toDeleteRequest())
-                            itemToDelete = null  // Close dialog
+                            itemToDelete = null
                         },
                         onDismiss = {
-                            itemToDelete = null  // Close dialog without deleting
+                            itemToDelete = null
                         }
                     )
                 }
@@ -320,17 +334,6 @@ fun FuelIssueViewScreen(
                         onVehicleSelected = { selectedVehicle = it }
                     )
 
-//                    DropdownField(
-//                        label = "Vehicle",
-//                        value = selectedVehicle,
-//                        expanded = vehicleExpanded,
-//                        items = vehicleNames,
-//                        onExpandedChange = { vehicleExpanded = !vehicleExpanded },
-//                        onItemSelected = {
-//                            selectedVehicle = it
-//                            vehicleExpanded = false
-//                        }
-//                    )
 
                     DropdownField(
                         label = "Business Unit",
@@ -349,8 +352,6 @@ fun FuelIssueViewScreen(
                             if (ftId != null && buId != null) {
                                 sharedViewModel.fetchWarehouse(buId, ftId)
                             }
-
-
                         }
                     )
 
@@ -422,7 +423,7 @@ fun FuelIssueViewScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(12.dp))
-                                    .background(Color(0xFFF8F8F8)) // Light background
+                                    .background(Color(0xFFF8F8F8))
                                     .clickable {
 
                                         showToDatePicker = true
@@ -431,8 +432,8 @@ fun FuelIssueViewScreen(
                                         1.dp,
                                         Color(0xFFE0E0E0),
                                         RoundedCornerShape(12.dp)
-                                    ) // Subtle border
-                                    .padding(horizontal = 16.dp, vertical = 14.dp) // Inner padding
+                                    )
+                                    .padding(horizontal = 16.dp, vertical = 14.dp)
                             ) {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
@@ -497,13 +498,37 @@ fun FuelIssueViewScreen(
                             onClick = {
                                 showBottomSheet = false
 
+                                val fuelType = if (selectedFuelType.startsWith("select", ignoreCase = true)) {
+                                    null
+                                } else {
+                                    selectedFuelType
+                                }
+
+                                val businessUnit = if (selectedBusinessUnit.startsWith("select", ignoreCase = true)) {
+                                    null
+                                } else {
+                                    selectedBusinessUnit
+                                }
+
+                                val warehouse = if (selectedWarehouse.startsWith("select", ignoreCase = true)) {
+                                    null
+                                } else {
+                                    selectedWarehouse
+                                }
+
+                                val vehicle = if (selectedVehicle.startsWith("select", ignoreCase = true)) {
+                                    null
+                                } else {
+                                    selectedVehicle
+                                }
+
                                 sharedViewModel.fetchExistingEntries(
                                     startDate.format(dateFormatter),
                                     endDate.format(dateFormatter),
-                                    selectedFuelType,
-                                    selectedBusinessUnit,
-                                    selectedWarehouse,
-                                    selectedVehicle
+                                    fuelType,
+                                    businessUnit,
+                                    warehouse,
+                                    vehicle
 
                                 )
                             },
@@ -544,7 +569,9 @@ fun FuelExistingEntry.toDeleteRequest(): DeleteFuelIssueRequest {
         prevIssueDate = this.prevIssueDate,
         meterStatus = this.meterStatus,
         current_Reading = this.current_Reading.toInt(), // Double → Int
-        entryBy = this.entryBy
+        entryBy = this.entryBy,
+        vehicleCode = this.vehicleCode,
+        issueNo = this.requestNo
     )
 }
 
@@ -592,28 +619,7 @@ fun FuelIssueListScreen(
                         )
 
                         Spacer(modifier = Modifier.weight(1f))
-                        /*IconButton(
-                            onClick = {
-                                if (item.canDelete != 0) {
-                                    itemToDelete = item
-                                    onDelete(item)
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        "This Entry cannot be deleted!",
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                            },
-                            modifier = Modifier.size(24.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = "Delete",
-                                tint = Color(0xFF006666),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }*/
+
                     }
 
                     Spacer(Modifier.height(8.dp))
@@ -788,7 +794,7 @@ fun FuelIssueDetailDialog(item: FuelExistingEntry, onDismiss: () -> Unit) {
                     .fillMaxWidth()
                     .verticalScroll(rememberScrollState())
             ) {
-                InfoRow("Issue No", item.tranId.toString() ?: "null")
+                InfoRow("Issue No", item.requestNo ?: "null")
                 InfoRow("Issue Date", item.issueDate ?: "null")
                 InfoRow("Fuel Type", item.itemType ?: "null")
                 InfoRow("Business Unit", item.buDesc ?: "null")
@@ -883,6 +889,7 @@ fun VehicleAutoCompleteTextViewFilter(
     }
 }
 
+/*
 @Composable
 fun FuelIssueRequestReadOnlyScreen(fuelIssueRequest: FuelIssueRequest) {
     Column(
@@ -941,4 +948,5 @@ fun FuelIssueRequestReadOnlyScreen(fuelIssueRequest: FuelIssueRequest) {
         ReadOnlyNoFocusFieldVeh(label = "Entry By", value = fuelIssueRequest.entryBy)
     }
 }
+*/
 

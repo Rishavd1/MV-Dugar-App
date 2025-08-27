@@ -69,34 +69,21 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
-    private val repository: FuelIssueRepository
-        get() {
-            return FuelIssueRepository(
-                RetrofitInstance.api
-            )
-        }
 
     var username by mutableStateOf("")
         private set
-
     var password by mutableStateOf("")
         private set
-
     var rememberMe by mutableStateOf(false)
         private set
-
     var passwordVisible by mutableStateOf(false)
         private set
     private val _navigateToHome = MutableStateFlow(false)
     val navigateToHome: StateFlow<Boolean> = _navigateToHome
-
-
     private val _isLoading = MutableStateFlow(false)
     val isLoading: StateFlow<Boolean> = _isLoading
-
     private val _errorMessage = MutableStateFlow<String?>(null)
     val errorMessage: StateFlow<String?> = _errorMessage
-
     private var _userDetails = MutableStateFlow<LoginDetailsResponse?>(null)
     val userDetails: StateFlow<LoginDetailsResponse?> = _userDetails.asStateFlow()
 
@@ -198,7 +185,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
-
     private val _businessType = MutableLiveData<List<BusinessUnit>>()
     val businessType: LiveData<List<BusinessUnit>> = _businessType
     suspend fun fetchBusinessUnit() {
@@ -435,6 +421,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             // _isLoading.value = true
             _errorMessage.value = null
+            _previousReadingsData.value = null
             try {
                 val response = withContext(Dispatchers.IO) {
                     RetrofitInstance.api.fetchVehicleList(fuelTypeId)
@@ -463,8 +450,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
     private val _previousReadingsData = MutableLiveData<PrevReadingResult?>()
     val previousReadingsData: LiveData<PrevReadingResult?> = _previousReadingsData
-
-
     fun fetchPrevReading(vehicleName: String, issueDate: String) {
         viewModelScope.launch {
             _isLoading.value = true
@@ -488,7 +473,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
-
     fun submitForm(context: Context, navController: NavController) {
         viewModelScope.launch {
             try {
@@ -605,7 +589,6 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
-
     private fun clearFormData() {
         _formState.value = null
         _imageFile.value = null
@@ -624,11 +607,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         costCenter.value = ""
         issueQuanity.value = 0.0
         standardConsumptionType.value = ""
+        _previousReadingsData.value = null
     }
-
     private val _deleteResponse = MutableLiveData<String?>()
     val deleteResponse: LiveData<String?> = _deleteResponse
-
+    private val _deleteSuccess = MutableLiveData<Boolean>()
+    val deleteSuccess: LiveData<Boolean> = _deleteSuccess
     fun deleteFuelIssue(context: Context,request: DeleteFuelIssueRequest) {
         viewModelScope.launch {
             try {
@@ -636,6 +620,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 if (response.isSuccessful) {
                     val responseBody = response.body()
                     if (responseBody != null && responseBody.isSuccess == 1) {
+                        _deleteSuccess.postValue(true)
                         Toast.makeText(
                             context,
                             responseBody.result.message,
@@ -643,6 +628,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                         ).show()
                        // _deleteResponse.postValue("Record Successfully Deleted!")
                     }else{
+                        _deleteSuccess.postValue(false)
                         Toast.makeText(
                             context,
                             "Failed to delete : ${response.code()} ${response.message()}",
@@ -653,6 +639,7 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
 
 
                 } else {
+                    _deleteSuccess.postValue(false)
                     Toast.makeText(
                         context,
                         "Error: "+response.code()+" "+response.message(),
@@ -661,9 +648,10 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                     //_deleteResponse.postValue("Error: ${response.message()}")
                 }
             } catch (e: Exception) {
+                _deleteSuccess.postValue(false)
                 Toast.makeText(
                     context,
-                    "Error: "+e.localizedMessage,
+                    "Error: "+e.message,
                     Toast.LENGTH_SHORT
                 ).show()
                 //_deleteResponse.postValue(e.localizedMessage ?: "Unknown error")

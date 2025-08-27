@@ -223,6 +223,9 @@ data class DeleteFuelIssueRequest(
     val prevIssueDate: String,
     val meterStatus: String,
     val current_Reading: Int,
-    val entryBy: String
+    val entryBy: String,
+
+    val vehicleCode : String,
+    val issueNo : String
 )
 

@@ -292,7 +292,10 @@ fun VehicleImageCaptureScreen(
                         vehicleName = sharedViewModel.selectedVehicleName.value.orEmpty(),
                         standardConsumption = sharedViewModel.standardConsumption.value ?: 0.0,
                         previousReading = sharedViewModel.previousReading.value ?: 0.0,
-                        previousIssueDate = sharedViewModel.previousIssueDate.value.orEmpty(),
+                        previousIssueDate = sharedViewModel.previousIssueDate.value
+                            .orEmpty()
+                            .takeIf { it.isNotEmpty() }
+                            ?: "null",
                         meterStatus = sharedViewModel.meterStatusString.value.orEmpty(),
                         currentReading = sharedViewModel.currentReading.value ?: 0.0,
                         entryBy = sharedViewModel.entryBy.value.orEmpty(),

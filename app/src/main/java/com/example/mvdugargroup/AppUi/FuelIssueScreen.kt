@@ -40,12 +40,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
-import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.utils.LoaderDialog
 import com.example.mvdugargroup.viewmodel.SharedViewModel
@@ -151,7 +149,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
 
     sharedViewModel.stock.value = stock?.stockQuantity
 
-
     issueNo = ""
     sharedViewModel.issueNo.value = issueNo
     Log.d(TAG, "FuelIssueScreen: Stock ${stock?.stockQuantity}")
@@ -178,7 +175,7 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                         popUpTo(Route.FUEL_ISSUE_VIEW) { inclusive = true }
                     }
                 }
-            ) {
+            ){
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Back"
@@ -192,12 +189,8 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                 modifier = Modifier.weight(1f)
             )
         }
-//        Spacer(modifier = Modifier.height(4.dp))
-//        ReadOnlyNoFocusField("Issue No",issueNo) //issueNo
         Spacer(modifier = Modifier.height(12.dp))
-//        Spacer(modifier = Modifier.height(4.dp))
         ReadOnlyNoFocusField("Issue Date",issueDate)
-
         Spacer(modifier = Modifier.height(12.dp))
 
         // Fuel Type Dropdown
@@ -248,7 +241,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
             }
         }
         Spacer(modifier = Modifier.height(12.dp))
-
         Text("Business Unit", fontWeight = FontWeight.Bold, modifier = Modifier.align(Alignment.Start))
         Spacer(modifier = Modifier.height(4.dp))
         ExposedDropdownMenuBox(
@@ -280,7 +272,6 @@ fun FuelIssueScreen(navController: NavController,sharedViewModel: SharedViewMode
                             val selectedFuelTypeId = sharedViewModel.fuelTypes.value?.find { it.itemType == selectedFuelType }?.itemId!!
                             val selectedBusinessUnitId = sharedViewModel.businessType.value?.find { it.businessUnitDesc == selectedBusinessUnit }?.businessUnitId!!
                             Log.d("TAG", "FuelIssueScreen:selectedFuelTypeId = $selectedFuelTypeId  selectedBusinessUnitId = $selectedBusinessUnitId ")
-
                             if (selectedFuelTypeId != null && selectedBusinessUnitId != null) {
                                 sharedViewModel.fetchWarehouse(selectedBusinessUnitId, selectedFuelTypeId)
                             }

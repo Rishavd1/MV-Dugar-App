@@ -21,6 +21,7 @@ import com.example.mvdugargroup.AppUi.FuelIssueScreen
 import com.example.mvdugargroup.AppUi.FuelIssueViewScreen
 import com.example.mvdugargroup.AppUi.LoginScreen
 import com.example.mvdugargroup.AppUi.ModuleListScreen
+import com.example.mvdugargroup.AppUi.SplashScreen
 import com.example.mvdugargroup.AppUi.VehicleAllocationScreen
 import com.example.mvdugargroup.AppUi.VehicleImageCaptureScreen
 import com.example.mvdugargroup.AppUi.VehicleImagePreviewScreen
@@ -46,7 +47,7 @@ class MainActivity : ComponentActivity() {
 fun AppNavigator(navController: NavHostController) {
     val sharedViewModel: SharedViewModel = viewModel()
     AnimatedNavHost( navController = navController,
-        startDestination = Route.LOGIN,
+        startDestination = Route.SPLASH_SCREEN,
         enterTransition = {
             slideInHorizontally(
                 initialOffsetX = { it },
@@ -72,6 +73,9 @@ fun AppNavigator(navController: NavHostController) {
             ) + fadeOut(animationSpec = tween(300))
         }
     ){
+        composable(Route.SPLASH_SCREEN) {
+            SplashScreen(navController, sharedViewModel)
+        }
         composable(Route.LOGIN) {
             LoginScreen(navController, sharedViewModel)
         }

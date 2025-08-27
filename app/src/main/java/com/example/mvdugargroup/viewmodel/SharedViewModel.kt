@@ -12,7 +12,6 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
-import com.example.mvdugargroup.Api.ApiResponse
 import com.example.mvdugargroup.Api.BusinessUnit
 import com.example.mvdugargroup.Api.DeleteFuelIssueRequest
 import com.example.mvdugargroup.Api.FuelExistingEntry
@@ -25,7 +24,6 @@ import com.example.mvdugargroup.Api.StockQuantity
 import com.example.mvdugargroup.Api.VehicleList
 import com.example.mvdugargroup.Api.Warehouse
 import com.example.mvdugargroup.Route
-
 import com.example.mvdugargroup.network.RetrofitInstance
 import com.example.mvdugargroup.sharedPreference.PreferenceManager
 import kotlinx.coroutines.Dispatchers
@@ -36,40 +34,31 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.json.Json
-import okhttp3.Dispatcher
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
-import retrofit2.Response
 import java.io.File
 import kotlin.toString
 
 class SharedViewModel(application: Application) : AndroidViewModel(application) {
 
     private val prefs = PreferenceManager(application)
-
     val selectedModule: StateFlow<String?> = prefs.selectedModuleFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
     val favoriteModules: StateFlow<Set<String>> = prefs.favoriteModulesFlow
         .stateIn(viewModelScope, SharingStarted.Eagerly, emptySet())
-
     fun updateSelectedModule(module: String) {
         viewModelScope.launch {
             prefs.saveSelectedModule(module)
         }
     }
-
     fun updateFavoriteModules(modules: Set<String>) {
         viewModelScope.launch {
             prefs.saveFavoriteModules(modules)
         }
     }
-
-
     var username by mutableStateOf("")
         private set
     var password by mutableStateOf("")
@@ -611,6 +600,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         standardConsumptionType.value = ""
         _previousReadingsData.value = null
     }
+
+
     private val _deleteResponse = MutableLiveData<String?>()
     val deleteResponse: LiveData<String?> = _deleteResponse
     private val _deleteSuccess = MutableLiveData<Boolean>()

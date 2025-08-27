@@ -50,11 +50,9 @@ fun VehicleAllocationScreen(
     val navBackStackEntry by navController.currentBackStackEntryAsState()
 
     BackHandler {
-
         navController.navigate(Route.FUEL_ISSUE) {
             popUpTo(Route.FUEL_ISSUE) { inclusive = true }
         }
-
     }
 
     val scrollState = rememberScrollState()
@@ -145,9 +143,6 @@ fun VehicleAllocationScreen(
                     .weight(1f)
             )
         }
-
-
-//        var vehicleExpanded by remember { mutableStateOf(false) }
         VehicleAutoCompleteTextView(
             vehicleNames = vehicleNames,
             selectedVehicle = selectedVehicle,
@@ -156,7 +151,6 @@ fun VehicleAllocationScreen(
                 Log.d("TAG", "Selected vehicle: $selectedVehicle")
                 val issueDate = sharedViewModel.issueDate.value
                 sharedViewModel.fetchPrevReading(selectedVehicle, issueDate)
-
                 sharedViewModel.selectedVehicleNumber.value =
                     vehicleList?.find { it.description == selectedVehicle.trim() }?.code
 
@@ -187,8 +181,6 @@ fun VehicleAllocationScreen(
         sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
         sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
         sharedViewModel.standardConsumptionType.value = previousReadingsData?.st_AverageT?.split(" ")[1].toString()
-
-
         Text(
             "Meter Status",
             fontWeight = FontWeight.Bold,
@@ -291,7 +283,7 @@ fun VehicleAllocationScreen(
             enabled = false
         )*/
 
-        LabelledField(
+        /*LabelledField(
             label = "Issue Quantity",
             value = issueQty,
             onValueChange = { input ->
@@ -305,7 +297,38 @@ fun VehicleAllocationScreen(
                 }
 
             }
+        )*/
+        var issueQuantityError by remember { mutableStateOf("") }
+
+        LabelledField(
+            label = "Issue Quantity",
+            value = issueQty,
+            onValueChange = { input ->
+                val sanitized = input.replace(",", ".")
+                val regex = """^\d*\.?\d{0,3}$""".toRegex() // allow up to 3 decimal places
+                if (sanitized.isEmpty() || sanitized.matches(regex)) {
+                    issueQty = sanitized
+                    if (sanitized.isNotEmpty()) {
+                        val qty = sanitized.toDoubleOrNull() ?: 0.0
+                        val stock = sharedViewModel.stock.value ?: 0.0
+
+                        if (qty > stock) {
+                            issueQuantityError = "Cannot issue more than stock ($stock)"
+                            sharedViewModel.issueQuanity.value = 0.0
+                        } else {
+                            issueQuantityError = ""
+                            sharedViewModel.issueQuanity.value = qty
+                        }
+                    } else {
+                        issueQuantityError = ""
+                        sharedViewModel.issueQuanity.value = 0.0
+                    }
+                }
+            },
+            isError = issueQuantityError.isNotEmpty(),
+            errorText = issueQuantityError
         )
+
 
         val readingPercentage = previousReadingsData?.diff_Perc ?: 1  //diff_Reading
 
@@ -349,7 +372,6 @@ fun VehicleAllocationScreen(
             }
         }
 
-
         Spacer(modifier = Modifier.height(8.dp))
         Button(
             modifier = Modifier
@@ -382,6 +404,10 @@ fun VehicleAllocationScreen(
 
                 if ((issueQty.toDoubleOrNull() ?: 0.0) <= 0) {
                     generalErrorMessage = "Issue Quantity must be greater than 0"
+                    return@Button
+                }
+                if (issueQuantityError.isNotEmpty()) {
+                    generalErrorMessage = issueQuantityError
                     return@Button
                 }
                 if (remarksRequired && remarks.isEmpty()) {
@@ -448,7 +474,6 @@ fun VehicleAutoCompleteTextView(
                             )
                         }
                     }
-
                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                 }
             },

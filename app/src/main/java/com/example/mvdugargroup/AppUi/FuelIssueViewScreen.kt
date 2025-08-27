@@ -103,6 +103,7 @@ fun FuelIssueViewScreen(
             popUpTo(Route.MODULE_LIST) { inclusive = true }
         }
     }
+
     val context = LocalContext.current
     LaunchedEffect(Unit) {
         sharedViewModel.fetchFuelTypes()

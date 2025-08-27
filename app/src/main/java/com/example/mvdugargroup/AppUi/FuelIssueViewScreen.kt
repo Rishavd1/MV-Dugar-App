@@ -78,6 +78,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import com.example.mvdugargroup.Api.DeleteFuelIssueRequest
 import com.example.mvdugargroup.Api.FuelExistingEntry
@@ -290,6 +291,10 @@ fun FuelIssueViewScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 16.dp)
+                        .align(Alignment.CenterHorizontally),
+                    textAlign = TextAlign.Center
+
+
                 )
             }
         }

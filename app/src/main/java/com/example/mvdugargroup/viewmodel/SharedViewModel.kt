@@ -473,6 +473,8 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
             }
         }
     }
+
+
     fun submitForm(context: Context, navController: NavController) {
         viewModelScope.launch {
             try {

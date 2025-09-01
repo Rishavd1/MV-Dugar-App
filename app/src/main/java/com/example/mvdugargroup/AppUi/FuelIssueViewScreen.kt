@@ -220,7 +220,6 @@ fun FuelIssueViewScreen(
                         navController?.navigate(Route.MODULE_LIST) {
                             popUpTo(Route.MODULE_LIST) { inclusive = true }
                         }
-//                        navController?.popBackStack()
                     }) {
                         Icon(Icons.Default.ArrowBack, contentDescription = "Back")
                     }

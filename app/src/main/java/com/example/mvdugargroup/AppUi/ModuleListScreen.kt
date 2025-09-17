@@ -1,6 +1,8 @@
 package com.example.mvdugargroup.AppUi
 
+import android.app.Activity
 import android.widget.Toast
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -13,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
@@ -30,34 +32,42 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.compose.material3.*
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.compose.rememberNavController
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.ui.theme.MVDugarGroupTheme
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBalance
-import androidx.compose.material.icons.filled.Apps
+import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.AttachMoney
 import androidx.compose.material.icons.filled.Engineering
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material.icons.filled.Inventory
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.filled.StarBorder
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.mvdugargroup.viewmodel.SharedViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ModuleListScreen(
-    navController: NavController,
-    userName: String = "Somnath Das",
-    userId: String = "somnathd"
+/*fun ModuleListScreen(
+    navController: NavController,sharedViewModel: SharedViewModel = viewModel()
 ) {
     val moduleList = listOf(
         "MATERIAL" to Icons.Default.Inventory,       // Represents materials/items
@@ -71,6 +81,7 @@ fun ModuleListScreen(
 
     Box(
         modifier = Modifier
+            .padding(24.dp)
             .fillMaxSize()
             .background(Color.White),
         contentAlignment = Alignment.TopCenter
@@ -83,7 +94,7 @@ fun ModuleListScreen(
             // User name at the top, centered
             Spacer(modifier = Modifier.height(32.dp))
             Text(
-                text = userName,
+                text = "SOMNATH DAS",
                 fontWeight = FontWeight.Bold,
                 fontSize = 24.sp,
                 color = Color.Black,
@@ -99,7 +110,7 @@ fun ModuleListScreen(
             )
             Spacer(modifier = Modifier.height(32.dp))
 
-            // Grid menu: 2 items per row, square cards
+
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
                 modifier = Modifier
@@ -121,7 +132,7 @@ fun ModuleListScreen(
                             .clickable {
                                 selectedModule = module.first
                                 if (module.first == "MATERIAL") {
-                                    navController.navigate(Route.FUEL_ISSUE)
+                                    navController.navigate(Route.FUEL_ISSUE_VIEW)
                                 }
                             }
                             .padding(8.dp),
@@ -162,7 +173,253 @@ fun ModuleListScreen(
             Spacer(modifier = Modifier.height(32.dp))
         }
     }
+}*/
+fun ModuleListScreen(
+    navController: NavController,
+    sharedViewModel: SharedViewModel = viewModel()
+) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+    BackHandler {
+        activity?.finishAffinity()
+    }
+
+    val allModules = listOf(
+        "MATERIAL" to Icons.Default.Inventory,
+        "CONSTRUCTION" to Icons.Default.Engineering,
+        "PAYROLL" to Icons.Default.AttachMoney,
+        "FINANCIALS" to Icons.Default.AccountBalance,
+        "SETUP" to Icons.Default.Settings
+    )
+
+    var expanded by remember { mutableStateOf(false) }
+    val favoriteModules by sharedViewModel.favoriteModules.collectAsState()
+    val selectedModule by sharedViewModel.selectedModule.collectAsState()
+    val userDetails by sharedViewModel.userDetails.collectAsState()
+
+
+
+    LaunchedEffect(Unit) {
+        sharedViewModel.loadUserDetails()
+    }
+
+    Box(
+        modifier = Modifier
+            .padding(10.dp,50.dp,10.dp,0.dp)
+            .fillMaxSize()
+            .background(Color.White),
+        contentAlignment = Alignment.TopCenter
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Top,
+            modifier = Modifier.fillMaxSize()
+        ) {
+            Spacer(modifier = Modifier.height(32.dp))
+            if (userDetails != null) {
+                Text(
+                    text = userDetails?.name ?: "",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 24.sp,
+                    color = Color.Black
+                )
+                sharedViewModel.entryBy.value = userDetails!!.userName
+            } else {
+                CircularProgressIndicator()
+            }
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "MENU SECTION",
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                color = Color.Gray
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 25.dp)
+            ) {
+                Column {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .border(1.dp, Color.Gray, RoundedCornerShape(8.dp))
+                            .clickable { expanded = true }
+                            .padding(horizontal = 16.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
+                    ) {
+                        Text(
+                            text = selectedModule ?: "Select Module",
+                            color = if (selectedModule != null) Color.Black else Color.Gray,
+                        )
+
+                        Icon(
+                            imageVector = Icons.Default.ArrowDropDown,
+                            contentDescription = "Dropdown Arrow",
+                            tint = Color.Gray
+                        )
+                    }
+
+                    Box(
+                        modifier = Modifier.wrapContentWidth(),
+                        contentAlignment = Alignment.Center
+                    ){
+                        DropdownMenu(
+                            expanded = expanded,
+                            onDismissRequest = { expanded = false },
+                            modifier = Modifier
+                                .wrapContentWidth()
+                                .background(Color.White)
+                        ) {
+                            allModules.forEach { module ->
+                                val moduleName = module.first
+                                DropdownMenuItem(
+                                    text = {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween,
+                                            modifier = Modifier.fillMaxWidth()
+                                        ) {
+                                            Text(moduleName)
+                                            IconButton(
+                                                onClick = {
+                                                    val updatedFavorites = if (favoriteModules.contains(moduleName)) {
+                                                        favoriteModules - moduleName
+                                                    } else {
+                                                        favoriteModules + moduleName
+                                                    }
+                                                    sharedViewModel.updateFavoriteModules(updatedFavorites)
+                                                }
+                                            ) {
+                                                Icon(
+                                                    imageVector = if (favoriteModules.contains(moduleName))
+                                                        Icons.Default.Favorite
+                                                    else
+                                                        Icons.Default.FavoriteBorder,
+                                                    contentDescription = null,
+                                                    tint = if (favoriteModules.contains(moduleName)) Color.Red else Color.Gray
+                                                )
+                                            }
+                                        }
+                                    },
+                                    onClick = {
+                                        sharedViewModel.updateSelectedModule(moduleName)
+                                        expanded = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                    if (favoriteModules.isEmpty()) {
+                        Text(
+                            text = "Touch on the Dropdown, then click on the Heart to make any Module Favourite.",
+                            fontSize = 14.sp,
+                            color = Color.Red,
+                            modifier = Modifier.padding(top = 8.dp)
+                        )
+                    }else{
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 12.dp),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "\uD83D\uDC47 Touch on the Module Card to continue.",
+                                fontSize = 16.sp,
+                                color =Color(0xFF018A8A),
+                               // color = Color(0xFF4CAF50), // green highlight
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+            // Grid of favorited modules
+            LazyVerticalGrid(
+                columns = GridCells.Fixed(2),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(16.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                items(allModules.filter { it.first in favoriteModules }) { module ->
+                    Box(
+                        modifier = Modifier
+                            .height(120.dp)
+                            .border(1.dp, Color.Black, shape = RoundedCornerShape(12.dp))
+                            .background( Color.White
+                                /*if (selectedModule == module.first) Color.White else Color.LightGray*/,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            .clickable {
+                                sharedViewModel.updateSelectedModule(module.first)
+                                if (module.first == "MATERIAL") {
+                                    navController.navigate(Route.FUEL_ISSUE_VIEW)
+                                }else{
+                                    Toast.makeText(
+                                        navController.context,
+                                        "No Further Process!",
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                            }
+                            .padding(8.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
+                        ) {
+                            Icon(
+                                imageVector = module.second,
+                                contentDescription = "${module.first} icon",
+                                tint = Color.Gray,
+                                modifier = Modifier
+                                    .align(Alignment.CenterHorizontally)
+                                    .padding(top = 12.dp)
+                            )
+
+                            Spacer(modifier = Modifier.height(20.dp))
+
+                            Text(
+                                text = module.first,
+                                style = TextStyle(
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 16.sp,
+                                    color = Color.Black,
+                                    textAlign = TextAlign.Center
+                                ),
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 12.dp)
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+
+        }
+    }
 }
+
+
+
+
+
+
 
 
 

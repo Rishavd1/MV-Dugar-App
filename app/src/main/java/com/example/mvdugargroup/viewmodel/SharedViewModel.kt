@@ -23,6 +23,7 @@ import com.example.mvdugargroup.Api.PrevReadingResult
 import com.example.mvdugargroup.Api.StockQuantity
 import com.example.mvdugargroup.Api.VehicleList
 import com.example.mvdugargroup.Api.Warehouse
+import com.example.mvdugargroup.AppUi.MessageDialog
 import com.example.mvdugargroup.Route
 import com.example.mvdugargroup.network.RetrofitInstance
 import com.example.mvdugargroup.sharedPreference.PreferenceManager
@@ -463,6 +464,12 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    private val _dialogMessage = MutableStateFlow<String?>(null)
+    val dialogMessage = _dialogMessage.asStateFlow()
+
+    fun clearDialogMessage() {
+        _dialogMessage.value = null
+    }
 
     fun submitForm(context: Context, navController: NavController) {
         viewModelScope.launch {
@@ -520,14 +527,16 @@ class SharedViewModel(application: Application) : AndroidViewModel(application) 
                 if (response.isSuccessful) {
                     val responseBody = response.body()
                     if (responseBody != null && responseBody.isSuccess == 1) {
-                        Toast.makeText(
-                            context,
-                            responseBody.result.message,
-                            Toast.LENGTH_SHORT
-                        ).show()
+//                        Toast.makeText(
+//                            context,
+//                            responseBody.result.message,
+//                            Toast.LENGTH_SHORT
+//                        ).show()
+//
+//                        clearFormData()
+//                        navController.navigate(Route.FUEL_ISSUE_VIEW)
+                        _dialogMessage.value = responseBody.result.message
 
-                        clearFormData()
-                        navController.navigate(Route.FUEL_ISSUE_VIEW)
                     }else{
                         Toast.makeText(
                             context,

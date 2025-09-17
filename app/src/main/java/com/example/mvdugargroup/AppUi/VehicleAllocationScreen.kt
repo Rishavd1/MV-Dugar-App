@@ -6,6 +6,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -158,7 +159,7 @@ fun VehicleAllocationScreen(
         )
 
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
 
 
@@ -166,17 +167,17 @@ fun VehicleAllocationScreen(
             label = "Standard Consumption",
             value = previousReadingsData?.st_AverageT ?: ""
         )
-        Spacer(modifier = Modifier.height(12.dp))
+//        Spacer(modifier = Modifier.height(2.dp))
         ReadOnlyNoFocusFieldVeh(
             label = "Previous Reading",
             value = previousReadingsData?.preV_READING?.toString() ?: ""
         )
-        Spacer(modifier = Modifier.height(12.dp))
+//        Spacer(modifier = Modifier.height(2.dp))
         ReadOnlyNoFocusFieldVeh(
             label = "Previous Issue Date",
             value = previousReadingsData?.preV_DATE ?: ""
         )
-        Spacer(modifier = Modifier.height(12.dp))
+//        Spacer(modifier = Modifier.height(2.dp))
         sharedViewModel.standardConsumption.value = previousReadingsData?.st_Average
         sharedViewModel.previousReading.value = previousReadingsData?.preV_READING?.toDouble()
         sharedViewModel.previousIssueDate.value = previousReadingsData?.preV_DATE
@@ -219,7 +220,7 @@ fun VehicleAllocationScreen(
         }
         sharedViewModel.currentReading.value = currentReading.toDoubleOrNull()
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(8.dp))
 
 
         val prevReadingDouble = previousReadingsData?.preV_READING?.toDouble() ?: 0.0
@@ -275,7 +276,7 @@ fun VehicleAllocationScreen(
 
 
         ReadOnlyNoFocusFieldVeh(label = "Standard Quantity", value = standardQty)
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(5.dp))
         /*LabelledField(
             label = "Standard Quantity",
             value = standardQty,
@@ -511,8 +512,29 @@ fun VehicleAutoCompleteTextView(
     }
 }
 
-
 @Composable
+fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Start
+    ) {
+        Text(
+            text = label,
+            fontWeight = FontWeight.Bold,
+            color = Color.Black
+        )
+        Spacer(Modifier.width(20.dp))
+        Text(
+            text = value,
+            color = Color.Black
+        )
+    }
+}
+
+/*@Composable
 fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
     Column {
         Text(
@@ -534,7 +556,7 @@ fun ReadOnlyNoFocusFieldVeh(label: String, value: String) {
             Text(text = value, color = Color.Black)
         }
     }
-}
+}*/
 
 @Composable
 fun LabelledField(
@@ -569,7 +591,7 @@ fun LabelledField(
                 modifier = Modifier.align(Alignment.Start)
             )
         }
-        Spacer(modifier = Modifier.height(15.dp))
+        Spacer(modifier = Modifier.height(8.dp))
     }
 }
 

@@ -96,6 +96,23 @@ fun VehicleImageCaptureScreen(
     var showPermissionDialog by remember { mutableStateOf(false) }
     val isLoading by sharedViewModel.isLoading.collectAsState()
 
+    val dialogMessage by sharedViewModel.dialogMessage.collectAsState()
+
+    if (dialogMessage != null) {
+        MessageDialog(
+            message = dialogMessage!!,
+            onDismiss = {
+                sharedViewModel.clearDialogMessage()
+                navController.navigate(Route.FUEL_ISSUE_VIEW) {
+                    popUpTo(Route.FUEL_ISSUE_VIEW) {
+                        inclusive = true
+                    }
+                }
+            }
+        )
+    }
+
+
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.RequestMultiplePermissions()
     ) { permissions ->
